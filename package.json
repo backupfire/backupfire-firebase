@@ -1,0 +1,47 @@
+{
+  "name": "@backupfire/firebase",
+  "version": "0.1.0",
+  "description": "Backup Fire Firebase agent",
+  "keywords": [
+    "Backup Fire",
+    "Firebase",
+    "Firestore",
+    "backup"
+  ],
+  "main": "index.js",
+  "repository": "https://github.com/backupfire/backupfire-firebase",
+  "author": "Sasha Koss <koss@nocorp.me>",
+  "devDependencies": {
+    "@babel/core": "^7.4.5",
+    "@babel/preset-env": "^7.4.5",
+    "@babel/preset-typescript": "^7.3.3",
+    "@types/body-parser": "^1.17.1",
+    "@types/express": "^4.17.1",
+    "@types/express-jwt": "^0.0.42",
+    "@types/jest": "^24.0.13",
+    "@types/mz": "^0.0.32",
+    "@types/node": "^12.0.4",
+    "@types/node-fetch": "^2.5.0",
+    "@types/sinon": "^7.0.13",
+    "babel-loader": "^8.0.6",
+    "babel-preset-power-assert": "^3.0.0",
+    "jest": "^24.8.0",
+    "power-assert": "^1.6.1",
+    "prettier": "^1.17.1",
+    "sinon": "^7.3.2",
+    "typescript": "^3.6.2"
+  },
+  "dependencies": {
+    "@google-cloud/firestore": "^2.3.0",
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "express-jwt": "^5.3.1",
+    "firebase-admin": "^8.5.0",
+    "firebase-functions": "^3.2.0",
+    "firebase-tools": "^7.3.2",
+    "googleapis": "^43.0.0",
+    "jsonwebtoken": "^8.5.1",
+    "mz": "^2.7.0",
+    "node-fetch": "^2.6.0"
+  }
+}

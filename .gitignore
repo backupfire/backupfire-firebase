@@ -1,0 +1,11 @@
+# Node.js
+node_modules
+yarn-error.log
+
+lib
+/secrets
+.envrc
+
+# Test server
+/test/server/build
+/test/server/.firebaserc
