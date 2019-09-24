@@ -7,13 +7,32 @@ import {
   checkFirestoreBackupStatusMiddleware
 } from './firestore'
 import { backupUsersMiddleware } from './users'
+import fetch from 'node-fetch'
+import { format } from 'url'
+
+export const defaultControllerDomain = 'backupfire.dev'
 
 /**
  * Backup Fire agent options.
  */
 export type BackupFireOptions = {
-  accessToken: string
-  sudoPassword: string
+  /**
+   * The controller app domain, defaults to backupfire.dev.
+   */
+  controllerDomain?: string
+
+  /**
+   * The controller access token that allows to securely communicate with
+   * the controller.
+   */
+  controllerToken: string
+
+  /**
+   * The admin password which protects the agent from unauthorized commands
+   * from the controller.
+   */
+  adminPassword: string
+
   bucketsWhitelist: string[]
 }
 
@@ -35,11 +54,14 @@ export default function backupFire(options: BackupFireOptions) {
  * [Express]: https://expressjs.com/
  */
 export function createApp(options: BackupFireOptions) {
+  // Send the initialization ping to the controller
+  sendInitializationPing(options)
+
   // Create Express app that would be mounted as a function
   const app = express()
 
   // Protect Backup Fire API with token authorization
-  app.use(jwt({ secret: options.accessToken }))
+  app.use(jwt({ secret: options.controllerToken }))
 
   // Parse JSON body
   app.use(bodyParser.json())
@@ -59,4 +81,18 @@ export function createApp(options: BackupFireOptions) {
   )
 
   return app
+}
+
+function sendInitializationPing(options: BackupFireOptions) {
+  // TODO: Report failure if the request fails
+  const pingURL = format({
+    hostname: options.controllerDomain || defaultControllerDomain,
+    protocol: 'https',
+    pathname: '/ping',
+    query: {
+      token: options.controllerToken,
+      projectId: process.env.GCP_PROJECT
+    }
+  })
+  return fetch(pingURL)
 }
