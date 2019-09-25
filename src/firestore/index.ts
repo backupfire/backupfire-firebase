@@ -4,7 +4,7 @@ import { backupFirestore } from './backup'
 import { checkFirestoreBackupStatus } from './status'
 
 export type FirestoreBackupOptions = {
-  bucketsWhitelist: string[]
+  bucketsWhitelist?: string[]
 }
 
 export type FirestoreBackupRequestOptions = {

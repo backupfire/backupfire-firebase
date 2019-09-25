@@ -33,7 +33,11 @@ export type BackupFireOptions = {
    */
   adminPassword: string
 
-  bucketsWhitelist: string[]
+  /**
+   * The list of buckets where the data can be backed up. It protects the agent
+   * from malformed backup commands from the controller.
+   */
+  bucketsWhitelist?: string[]
 }
 
 /**

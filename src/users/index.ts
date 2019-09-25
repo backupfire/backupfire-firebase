@@ -7,7 +7,7 @@ import operationSuccess from '../_lib/operationSuccess'
 import asyncMiddleware from '../_lib/asyncMiddleware'
 
 export type UsersBackupOptions = {
-  bucketsWhitelist: string[]
+  bucketsWhitelist?: string[]
 }
 
 export type UsersBackupRequestOptions = {
