@@ -89,14 +89,23 @@ export function createApp(options: BackupFireOptions) {
 
 function sendInitializationPing(options: BackupFireOptions) {
   // TODO: Report failure if the request fails
+  // TODO: Report failure if any of environment varibales are missing
   const pingURL = format({
     hostname: options.controllerDomain || defaultControllerDomain,
     protocol: 'https',
     pathname: '/ping',
     query: {
       token: options.controllerToken,
-      projectId: process.env.GCP_PROJECT
+      projectId: process.env.GCP_PROJECT,
+      functionURL: functionURL()
     }
   })
   return fetch(pingURL)
+}
+
+function functionURL() {
+  const region = process.env.FUNCTION_REGION
+  const projecId = process.env.GCP_PROJECT
+  const functionName = process.env.FUNCTION_NAME
+  return `https://${region}-${projecId}.cloudfunctions.net/${functionName}`
 }
