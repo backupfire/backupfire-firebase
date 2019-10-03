@@ -1,6 +1,7 @@
 import bodyParser from 'body-parser'
 import express from 'express'
 import jwt from 'express-jwt'
+import cors from 'cors'
 import * as functions from 'firebase-functions'
 import {
   backupFirestoreMiddleware,
@@ -9,6 +10,11 @@ import {
 import { backupUsersMiddleware } from './users'
 import fetch from 'node-fetch'
 import { format } from 'url'
+import {
+  storageListMiddleware,
+  createStorageMiddleware,
+  updateStorageMiddleware
+} from './storage'
 
 export const defaultControllerDomain = 'backupfire.dev'
 
@@ -40,12 +46,27 @@ export type BackupFireOptions = {
   bucketsWhitelist?: string[]
 }
 
+type BackupFireEnvConfig = {
+  domain?: string
+  token: string
+  password: string
+  whitelist?: string
+}
+
 /**
  * Creates Backup Fire Firebase Functions HTTPS handler.
  *
  * @param options - The Backup Fire agent options
  */
-export default function backupFire(options: BackupFireOptions) {
+export default function backupFire() {
+  const envConfig = functions.config().backupfire as BackupFireEnvConfig
+  const options = {
+    controllerDomain: envConfig.domain,
+    controllerToken: envConfig.token,
+    adminPassword: envConfig.password,
+    bucketsWhitelist:
+      (envConfig.whitelist && envConfig.whitelist.split(',')) || undefined
+  }
   return functions.https.onRequest(createApp(options))
 }
 
@@ -70,19 +91,25 @@ export function createApp(options: BackupFireOptions) {
   // Parse JSON body
   app.use(bodyParser.json())
 
+  // Allow requests from web
+  app.use(cors({ origin: true }))
+
+  const globalOptions = { bucketsWhitelist: options.bucketsWhitelist }
+
   // Backup Firestore
-  app.post(
-    '/firestore',
-    backupFirestoreMiddleware({ bucketsWhitelist: options.bucketsWhitelist })
-  )
+  app.post('/firestore', backupFirestoreMiddleware(globalOptions))
   // Check Firestore backup status
   app.get('/firestore/status', checkFirestoreBackupStatusMiddleware())
 
   // Backup Firebase users
-  app.post(
-    '/users',
-    backupUsersMiddleware({ bucketsWhitelist: options.bucketsWhitelist })
-  )
+  app.post('/users', backupUsersMiddleware(globalOptions))
+
+  // List storage
+  app.get('/storage', storageListMiddleware(globalOptions))
+  // Create storage
+  app.post('/storage', createStorageMiddleware(globalOptions))
+  // Update storage
+  app.put('/storage/:storageId', updateStorageMiddleware(globalOptions))
 
   return app
 }
@@ -97,13 +124,13 @@ function sendInitializationPing(options: BackupFireOptions) {
     query: {
       token: options.controllerToken,
       projectId: process.env.GCP_PROJECT,
-      functionURL: functionURL()
+      agentURL: agentURL()
     }
   })
   return fetch(pingURL)
 }
 
-function functionURL() {
+function agentURL() {
   const region = process.env.FUNCTION_REGION
   const projecId = process.env.GCP_PROJECT
   const functionName = process.env.FUNCTION_NAME
