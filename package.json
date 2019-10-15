@@ -8,7 +8,7 @@
     "Firestore",
     "backup"
   ],
-  "main": "index.js",
+  "main": "lib/index.js",
   "repository": "https://github.com/backupfire/backupfire-firebase",
   "author": "Sasha Koss <koss@nocorp.me>",
   "devDependencies": {
