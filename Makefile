@@ -1,29 +1,28 @@
 .DEFAULT_GOAL := build
 .PHONY: build
 
-SHELL := /bin/bash
-PATH := $(shell yarn bin):$(PATH)
+BIN = $(shell yarn bin)
 
 test:
-	jest
+	${BIN}/jest
 
 test-watch:
-	jest --watch
+	${BIN}/jest --watch
 
 # Test server
 
 build-test-server:
-	@tsc test/server/index.ts --esModuleInterop --outDir test/server/build
+	@${BIN}/tsc test/server/index.ts --esModuleInterop --outDir test/server/build
 
 deploy-test-server: build-test-server
-	@cd test/server && firebase deploy --only functions:backup
+	@cd test/server && ${BIN}/firebase deploy --only functions:backup
 
 # Staging & production
 
 build:
 	@rm -rf lib
-	@tsc
-	@prettier "lib/**/*.[jt]s" --write --loglevel silent
+	@${BIN}/tsc
+	@${BIN}/prettier "lib/**/*.[jt]s" --write --loglevel silent
 	@cp {package.json,*.md} lib
 	@rsync --archive --prune-empty-dirs --exclude '*.ts' --relative src/./ lib
 
