@@ -20,7 +20,7 @@ export async function backupFirestore(options: FirestoreBackupRequestOptions) {
   // https://googleapis.dev/nodejs/firestore/latest/v1.FirestoreAdminClient.html#exportDocuments
   const [operation] = (await client.exportDocuments({
     name: databaseName,
-    outputUriPrefix: options.bucket
+    outputUriPrefix: `gs://${options.storageId}/${options.path}`
   })) as ExportDocumentsResponse
 
   return operation.name

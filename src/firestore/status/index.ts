@@ -43,14 +43,14 @@ type OperationStatusProgress = {
 
 export type OperationStatus = {
   startTime: string
-  endTime: string
-  done: boolean
-  progressDocuments: OperationStatusProgress
-  progressBytes: OperationStatusProgress
+  endTime?: string
+  done?: boolean
+  progressDocuments?: OperationStatusProgress
+  progressBytes?: OperationStatusProgress
 }
 
 export async function checkFirestoreBackupStatus(
-  options: FirestoreCheckBackupStatusRequestOptions
+  id: string
 ): Promise<OperationStatus> {
   const auth = new google.auth.GoogleAuth({
     scopes: [
@@ -64,7 +64,7 @@ export async function checkFirestoreBackupStatus(
     auth: authClient
   })
   const response = await (firestore.projects.databases.operations.get({
-    name: options.id
+    name: id
   }) as GetOperationResponse)
 
   const {
@@ -76,8 +76,8 @@ export async function checkFirestoreBackupStatus(
     startTime,
     endTime,
     done,
-    progressDocuments: parseProgress(progressDocuments),
-    progressBytes: parseProgress(progressBytes)
+    progressDocuments: progressDocuments && parseProgress(progressDocuments),
+    progressBytes: progressBytes && parseProgress(progressBytes)
   }
 }
 

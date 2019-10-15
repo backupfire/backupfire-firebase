@@ -3,15 +3,18 @@ import * as admin from 'firebase-admin'
 import { tmpdir } from 'os'
 import { resolve, parse } from 'path'
 import { unlink } from 'mz/fs'
-import operationSuccess from '../_lib/operationSuccess'
+import operationResponse, {
+  UsersStatusResponse
+} from '../_lib/operationSuccess'
 import asyncMiddleware from '../_lib/asyncMiddleware'
+import { readFile } from 'mz/fs'
 
 export type UsersBackupOptions = {
   bucketsWhitelist?: string[]
 }
 
 export type UsersBackupRequestOptions = {
-  bucket: string
+  storageId: string
   path: string
 }
 
@@ -21,16 +24,16 @@ export function backupUsersMiddleware({
   return asyncMiddleware(async (request, response) => {
     // TODO: Validate options
     const options = request.body as UsersBackupRequestOptions
-
-    await backupUsers(options)
-
-    operationSuccess(response, { state: 'completed', data: {} })
+    const state = await backupUsers(options)
+    operationResponse(response, state)
   })
 }
 
-async function backupUsers(options: UsersBackupRequestOptions) {
+async function backupUsers(
+  options: UsersBackupRequestOptions
+): Promise<UsersStatusResponse> {
   // Create bucket
-  const bucket = admin.storage().bucket(options.bucket)
+  const bucket = admin.storage().bucket(options.storageId)
 
   // Create temporary file path
   const path = tmpPath(options.path)
@@ -40,11 +43,33 @@ async function backupUsers(options: UsersBackupRequestOptions) {
     project: process.env.GCP_PROJECT as string
   })
 
-  // Upload the users to specified bucket
-  await bucket.upload(path, { destination: options.path })
+  // Calculate the number of users
+  const usersCount = await readFile(path, 'utf8')
+    .then(JSON.parse)
+    .then(({ users }: { users: any[] }) => users.length)
+    // TODO: Add to log
+    .catch(_err => undefined)
+
+  // Parsing has failed, the exported file is unreadable
+  if (usersCount === undefined) {
+    // Remove the temporary file
+    await unlink(path)
+
+    return {
+      state: 'failed',
+      data: { reason: 'Failed to parse the backup file' }
+    }
+  }
+
+  // Upload the users backup to the storage
+  const size = await bucket
+    .upload(path, { destination: options.path })
+    .then(([file]) => file.metadata.size as string)
 
   // Remove the temporary file
-  return unlink(path)
+  await unlink(path)
+
+  return { state: 'completed', data: { usersCount, size } }
 }
 
 /**

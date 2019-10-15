@@ -1,14 +1,16 @@
-import operationSuccess from '../_lib/operationSuccess'
+import operationResponse from '../_lib/operationSuccess'
 import asyncMiddleware from '../_lib/asyncMiddleware'
 import { backupFirestore } from './backup'
 import { checkFirestoreBackupStatus } from './status'
+import { Response } from 'express'
 
 export type FirestoreBackupOptions = {
   bucketsWhitelist?: string[]
 }
 
 export type FirestoreBackupRequestOptions = {
-  bucket: string
+  storageId: string
+  path: string
 }
 
 export function backupFirestoreMiddleware({
@@ -18,9 +20,10 @@ export function backupFirestoreMiddleware({
     // TODO: Validate options
     const options = request.body as FirestoreBackupRequestOptions
 
+    // Request Firestore backup
     const id = await backupFirestore(options)
 
-    operationSuccess(response, { state: 'pending', data: { id } })
+    return respondWithStatus(response, id)
   })
 }
 
@@ -28,21 +31,18 @@ export type FirestoreCheckBackupStatusRequestOptions = {
   id: string
 }
 
-export type BackupOperationResponse<OperationData> = {
-  state: 'completed' | 'pending' | 'failed'
-  data: OperationData
-}
-
 export function checkFirestoreBackupStatusMiddleware() {
   return asyncMiddleware(async (request, response) => {
     // TODO: Validate options
     const options = request.query as FirestoreCheckBackupStatusRequestOptions
+    return respondWithStatus(response, options.id)
+  })
+}
 
-    const status = await checkFirestoreBackupStatus(options)
-
-    operationSuccess(response, {
-      state: status.done ? 'completed' : 'pending',
-      data: status
-    })
+async function respondWithStatus(response: Response, id: string) {
+  const status = await checkFirestoreBackupStatus(id)
+  operationResponse(response, {
+    state: status.done ? 'completed' : 'pending',
+    data: { id, status }
   })
 }
