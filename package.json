@@ -9,7 +9,9 @@
     "backup"
   ],
   "main": "lib/index.js",
+  "homepage": "https://backupfire.dev",
   "repository": "https://github.com/backupfire/backupfire-firebase",
+  "license": "MIT",
   "author": "Sasha Koss <koss@nocorp.me>",
   "devDependencies": {
     "@babel/core": "^7.4.5",
