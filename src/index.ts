@@ -59,7 +59,17 @@ type BackupFireEnvConfig = {
  * @param options - The Backup Fire agent options
  */
 export default function backupFire() {
-  const envConfig = functions.config().backupfire as BackupFireEnvConfig
+  const envConfig = functions.config().backupfire as
+    | BackupFireEnvConfig
+    | undefined
+
+  if (!envConfig) {
+    console.warn(
+      `Warning: "backupfire" key isn't found in the Functions environment configuration. Running a dummy HTTP handler instead of the Backup Fire agent...`
+    )
+    return functions.https.onRequest((_req, resp) => resp.end())
+  }
+
   const options = {
     controllerDomain: envConfig.domain,
     controllerToken: envConfig.token,
