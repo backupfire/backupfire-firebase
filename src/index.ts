@@ -110,7 +110,7 @@ export default function backupFire() {
   if (runtimeEnv.functionName !== 'backupfire') {
     if (options.debug)
       console.log(
-        `The function isn't "backupfire". Running a dummy HTTP handler instead of the Backup Fire agent...`
+        `The function name isn't "backupfire" (${runtimeEnv.functionName}). Running a dummy HTTP handler instead of the Backup Fire agent...`
       )
     return dummyHandler()
   }
