@@ -79,7 +79,7 @@ type RuntimeEnvironment = {
  * @param options - The Backup Fire agent options
  */
 export default function backupFire() {
-  // Derive Backup Fire options from environement configuration
+  // Derive Backup Fire options from environment configuration
 
   const envConfig = functions.config().backupfire as
     | BackupFireEnvConfig
@@ -102,7 +102,7 @@ export default function backupFire() {
     debug: envConfig.debug === 'true'
   }
 
-  // Get runtime environement (Firebase project ID, region, etc)
+  // Get runtime environment (Firebase project ID, region, etc)
 
   const runtimeEnv = getRuntimeEnv()
 
@@ -118,7 +118,7 @@ export default function backupFire() {
   // If some of the variables are missing, use dummy handler
   if (!isCompleteRuntimeEnv(runtimeEnv)) {
     console.warn(
-      'Warning: runtime environement is incomplete:',
+      'Warning: runtime environment is incomplete:',
       prettyJSON(runtimeEnv)
     )
     console.warn(
