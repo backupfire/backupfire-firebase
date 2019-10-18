@@ -18,6 +18,8 @@ import {
 
 export const defaultControllerDomain = 'backupfire.dev'
 
+export const defaultRegion = 'us-central1'
+
 /**
  * Backup Fire agent options.
  */
@@ -136,7 +138,7 @@ export default function backupFire() {
   // Send the initialization ping to the controller
   sendInitializationPing(options, runtimeEnv)
 
-  return functions.https.onRequest(createApp(options))
+  return functions.region(defaultRegion).https.onRequest(createApp(options))
 }
 
 /**
@@ -210,7 +212,7 @@ function agentURL(runtimeEnv: RuntimeEnvironment) {
 
 function getRuntimeEnv(): IncompleteRuntimeEnvironment | RuntimeEnvironment {
   return {
-    region: process.env.FUNCTION_REGION,
+    region: defaultRegion,
     projectId: process.env.GCP_PROJECT,
     functionName: process.env.FUNCTION_NAME
   }
@@ -225,7 +227,9 @@ function isCompleteRuntimeEnv(
 }
 
 function dummyHandler() {
-  return functions.https.onRequest((_req, resp) => resp.end())
+  return functions
+    .region(defaultRegion)
+    .https.onRequest((_req, resp) => resp.end())
 }
 
 function prettyJSON(obj: any) {
