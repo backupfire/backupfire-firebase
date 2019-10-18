@@ -214,7 +214,9 @@ function getRuntimeEnv(): IncompleteRuntimeEnvironment | RuntimeEnvironment {
   return {
     region: defaultRegion,
     projectId: process.env.GCP_PROJECT,
-    functionName: process.env.FUNCTION_NAME
+    // Node.js v8 runtime uses FUNCTION_NAME, v10 — FUNCTION_TARGET
+    // See: https://cloud.google.com/functions/docs/env-var#environment_variables_set_automatically
+    functionName: process.env.FUNCTION_NAME || process.env.FUNCTION_TARGET
   }
 }
 
