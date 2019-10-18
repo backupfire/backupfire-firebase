@@ -7,6 +7,16 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## 0.4.0 - 2019-10-18
+
+### Fixed
+
+- Make the agent work with Node.js v10 runtime.
+
+### Changed
+
+- Always deploy the agent to `us-central1` region.
+
 ## 0.3.0 - 2019-10-18
 
 ### Added
