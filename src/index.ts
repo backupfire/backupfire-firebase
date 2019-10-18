@@ -44,6 +44,11 @@ export type BackupFireOptions = {
    * from malformed backup commands from the controller.
    */
   bucketsAllowlist?: string[]
+
+  /**
+   * Make the agent print debug messages to the log.
+   */
+  debug?: boolean
 }
 
 type BackupFireEnvConfig = {
@@ -51,6 +56,19 @@ type BackupFireEnvConfig = {
   token: string
   password: string
   allowlist?: string
+  debug?: string
+}
+
+type IncompleteRuntimeEnvironment = {
+  region: string | undefined
+  projectId: string | undefined
+  functionName: string | undefined
+}
+
+type RuntimeEnvironment = {
+  region: string
+  projectId: string
+  functionName: string
 }
 
 /**
@@ -59,15 +77,18 @@ type BackupFireEnvConfig = {
  * @param options - The Backup Fire agent options
  */
 export default function backupFire() {
+  // Derive Backup Fire options from environement configuration
+
   const envConfig = functions.config().backupfire as
     | BackupFireEnvConfig
     | undefined
 
+  // If options aren't set, use  dummy handler instead
   if (!envConfig) {
     console.warn(
       `Warning: "backupfire" key isn't found in the Functions environment configuration. Running a dummy HTTP handler instead of the Backup Fire agent...`
     )
-    return functions.https.onRequest((_req, resp) => resp.end())
+    return dummyHandler()
   }
 
   const options = {
@@ -75,8 +96,46 @@ export default function backupFire() {
     controllerToken: envConfig.token,
     adminPassword: envConfig.password,
     bucketsAllowlist:
-      (envConfig.allowlist && envConfig.allowlist.split(',')) || undefined
+      (envConfig.allowlist && envConfig.allowlist.split(',')) || undefined,
+    debug: envConfig.debug === 'true'
   }
+
+  // Get runtime environement (Firebase project ID, region, etc)
+
+  const runtimeEnv = getRuntimeEnv()
+
+  // If the function name isn't backupfire, use dummy handler
+  if (runtimeEnv.functionName !== 'backupfire') {
+    if (options.debug)
+      console.log(
+        `The function isn't "backupfire". Running a dummy HTTP handler instead of the Backup Fire agent...`
+      )
+    return dummyHandler()
+  }
+
+  // If some of the variables are missing, use dummy handler
+  if (!isCompleteRuntimeEnv(runtimeEnv)) {
+    console.warn(
+      'Warning: runtime environement is incomplete:',
+      prettyJSON(runtimeEnv)
+    )
+    console.warn(
+      'Running a dummy HTTP handler instead of the Backup Fire agent...'
+    )
+    return dummyHandler()
+  }
+
+  if (options.debug) {
+    console.log(
+      'Initializing Backup Fire agent with options:',
+      prettyJSON(options)
+    )
+    console.log('Runtime environment:', prettyJSON(runtimeEnv))
+  }
+
+  // Send the initialization ping to the controller
+  sendInitializationPing(options, runtimeEnv)
+
   return functions.https.onRequest(createApp(options))
 }
 
@@ -89,9 +148,6 @@ export default function backupFire() {
  * [Express]: https://expressjs.com/
  */
 export function createApp(options: BackupFireOptions) {
-  // Send the initialization ping to the controller
-  sendInitializationPing(options)
-
   // Create Express app that would be mounted as a function
   const app = express()
 
@@ -124,25 +180,54 @@ export function createApp(options: BackupFireOptions) {
   return app
 }
 
-function sendInitializationPing(options: BackupFireOptions) {
+function sendInitializationPing(
+  options: BackupFireOptions,
+  runtimeEnv: RuntimeEnvironment
+) {
   // TODO: Report failure if the request fails
-  // TODO: Report failure if any of environment varibales are missing
   const pingURL = format({
     hostname: options.controllerDomain || defaultControllerDomain,
     protocol: 'https',
     pathname: '/ping',
     query: {
+      // TODO: Send more data:
+      // - Agent version
+      // - Node.js version
+      // - Function region
+      // - Something else?
       token: options.controllerToken,
-      projectId: process.env.GCP_PROJECT,
-      agentURL: agentURL()
+      projectId: runtimeEnv.projectId,
+      agentURL: agentURL(runtimeEnv)
     }
   })
   return fetch(pingURL)
 }
 
-function agentURL() {
-  const region = process.env.FUNCTION_REGION
-  const projecId = process.env.GCP_PROJECT
-  const functionName = process.env.FUNCTION_NAME
-  return `https://${region}-${projecId}.cloudfunctions.net/${functionName}`
+function agentURL(runtimeEnv: RuntimeEnvironment) {
+  const { region, projectId, functionName } = runtimeEnv
+  return `https://${region}-${projectId}.cloudfunctions.net/${functionName}`
+}
+
+function getRuntimeEnv(): IncompleteRuntimeEnvironment | RuntimeEnvironment {
+  return {
+    region: process.env.FUNCTION_REGION,
+    projectId: process.env.GCP_PROJECT,
+    functionName: process.env.FUNCTION_NAME
+  }
+}
+
+function isCompleteRuntimeEnv(
+  runtimeEnv: IncompleteRuntimeEnvironment | RuntimeEnvironment
+): runtimeEnv is RuntimeEnvironment {
+  return (
+    !!runtimeEnv.functionName && !!runtimeEnv.projectId && !!runtimeEnv.region
+  )
+}
+
+function dummyHandler() {
+  return functions.https.onRequest((_req, resp) => resp.end())
+}
+
+function prettyJSON(obj: any) {
+  return JSON.stringify(obj, null, 2)
 }

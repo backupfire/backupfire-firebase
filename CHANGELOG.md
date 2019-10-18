@@ -7,6 +7,17 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## 0.3.0 - 2019-10-18
+
+### Added
+
+- Added `debug` option which prints debug information to the log.
+- Print warnings when environment configuration isn't found or necessary variables are missing in the runtime environment.
+
+### Changed
+
+- Ignore function instances with name not equal `backupfire`.
+
 ## 0.2.0 - 2019-10-17
 
 ### Changed
