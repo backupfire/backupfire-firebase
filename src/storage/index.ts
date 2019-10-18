@@ -2,10 +2,10 @@ import asyncMiddleware from '../_lib/asyncMiddleware'
 import { Storage as CloudStorage, Bucket } from '@google-cloud/storage'
 
 export type StorageOptions = {
-  bucketsWhitelist?: string[]
+  bucketsAllowlist?: string[]
 }
 
-export function storageListMiddleware({ bucketsWhitelist }: StorageOptions) {
+export function storageListMiddleware({ bucketsAllowlist }: StorageOptions) {
   return asyncMiddleware(async (request, response) => {
     const storage = new CloudStorage()
     const [buckets] = await storage.getBuckets()
@@ -14,7 +14,7 @@ export function storageListMiddleware({ bucketsWhitelist }: StorageOptions) {
   })
 }
 
-export function createStorageMiddleware({ bucketsWhitelist }: StorageOptions) {
+export function createStorageMiddleware({ bucketsAllowlist }: StorageOptions) {
   return asyncMiddleware(async (request, response) => {
     // TODO: Validate options
 
@@ -33,7 +33,7 @@ type UpdateStorageRequestBody = {
 
 type KeepBackupsUnit = 'years' | 'months' | 'days'
 
-export function updateStorageMiddleware({ bucketsWhitelist }: StorageOptions) {
+export function updateStorageMiddleware({ bucketsAllowlist }: StorageOptions) {
   return asyncMiddleware(async (request, response) => {
     // TODO: Validate options
     const storageId = request.params.storageId as string

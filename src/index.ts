@@ -43,14 +43,14 @@ export type BackupFireOptions = {
    * The list of buckets where the data can be backed up. It protects the agent
    * from malformed backup commands from the controller.
    */
-  bucketsWhitelist?: string[]
+  bucketsAllowlist?: string[]
 }
 
 type BackupFireEnvConfig = {
   domain?: string
   token: string
   password: string
-  whitelist?: string
+  allowlist?: string
 }
 
 /**
@@ -74,8 +74,8 @@ export default function backupFire() {
     controllerDomain: envConfig.domain,
     controllerToken: envConfig.token,
     adminPassword: envConfig.password,
-    bucketsWhitelist:
-      (envConfig.whitelist && envConfig.whitelist.split(',')) || undefined
+    bucketsAllowlist:
+      (envConfig.allowlist && envConfig.allowlist.split(',')) || undefined
   }
   return functions.https.onRequest(createApp(options))
 }
@@ -104,7 +104,7 @@ export function createApp(options: BackupFireOptions) {
   // Allow requests from web
   app.use(cors({ origin: true }))
 
-  const globalOptions = { bucketsWhitelist: options.bucketsWhitelist }
+  const globalOptions = { bucketsAllowlist: options.bucketsAllowlist }
 
   // Backup Firestore
   app.post('/firestore', backupFirestoreMiddleware(globalOptions))

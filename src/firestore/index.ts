@@ -5,7 +5,7 @@ import { checkFirestoreBackupStatus } from './status'
 import { Response } from 'express'
 
 export type FirestoreBackupOptions = {
-  bucketsWhitelist?: string[]
+  bucketsAllowlist?: string[]
 }
 
 export type FirestoreBackupRequestOptions = {
@@ -14,7 +14,7 @@ export type FirestoreBackupRequestOptions = {
 }
 
 export function backupFirestoreMiddleware({
-  bucketsWhitelist
+  bucketsAllowlist
 }: FirestoreBackupOptions) {
   return asyncMiddleware(async (request, response) => {
     // TODO: Validate options

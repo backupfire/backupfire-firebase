@@ -10,7 +10,7 @@ import asyncMiddleware from '../_lib/asyncMiddleware'
 import { readFile } from 'mz/fs'
 
 export type UsersBackupOptions = {
-  bucketsWhitelist?: string[]
+  bucketsAllowlist?: string[]
 }
 
 export type UsersBackupRequestOptions = {
@@ -19,7 +19,7 @@ export type UsersBackupRequestOptions = {
 }
 
 export function backupUsersMiddleware({
-  bucketsWhitelist
+  bucketsAllowlist
 }: UsersBackupOptions) {
   return asyncMiddleware(async (request, response) => {
     // TODO: Validate options
