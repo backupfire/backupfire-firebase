@@ -138,18 +138,24 @@ export default function backupFire() {
   // Send the initialization ping to the controller
   sendInitializationPing(options, runtimeEnv)
 
-  return functions.region(defaultRegion).https.onRequest(createApp(options))
+  return functions
+    .region(defaultRegion)
+    .https.onRequest(createApp(runtimeEnv, options))
 }
 
 /**
  * Creates [Express] app that serves as an agent that provide API to
  * the Backup Fire controller.
  *
+ * @param runtimeEnv - The runtime environment variables
  * @param options - The Backup Fire agent options
  *
  * [Express]: https://expressjs.com/
  */
-export function createApp(options: BackupFireOptions) {
+export function createApp(
+  runtimeEnv: RuntimeEnvironment,
+  options: BackupFireOptions
+) {
   // Create Express app that would be mounted as a function
   const app = express()
 
@@ -170,7 +176,10 @@ export function createApp(options: BackupFireOptions) {
   app.get('/firestore/status', checkFirestoreBackupStatusMiddleware())
 
   // Backup Firebase users
-  app.post('/users', backupUsersMiddleware(globalOptions))
+  app.post(
+    '/users',
+    backupUsersMiddleware({ projectId: runtimeEnv.projectId, ...globalOptions })
+  )
 
   // List storage
   app.get('/storage', storageListMiddleware(globalOptions))

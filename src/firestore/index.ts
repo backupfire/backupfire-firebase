@@ -6,6 +6,7 @@ import { Response } from 'express'
 
 export type FirestoreBackupOptions = {
   bucketsAllowlist?: string[]
+  projectId: string
 }
 
 export type FirestoreBackupRequestOptions = {
@@ -14,14 +15,15 @@ export type FirestoreBackupRequestOptions = {
 }
 
 export function backupFirestoreMiddleware({
-  bucketsAllowlist
+  bucketsAllowlist,
+  projectId
 }: FirestoreBackupOptions) {
   return asyncMiddleware(async (request, response) => {
     // TODO: Validate options
     const options = request.body as FirestoreBackupRequestOptions
 
     // Request Firestore backup
-    const id = await backupFirestore(options)
+    const id = await backupFirestore(projectId, options)
 
     return respondWithStatus(response, id)
   })

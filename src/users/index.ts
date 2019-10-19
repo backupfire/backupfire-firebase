@@ -11,6 +11,7 @@ import { readFile } from 'mz/fs'
 
 export type UsersBackupOptions = {
   bucketsAllowlist?: string[]
+  projectId: string
 }
 
 export type UsersBackupRequestOptions = {
@@ -19,17 +20,19 @@ export type UsersBackupRequestOptions = {
 }
 
 export function backupUsersMiddleware({
-  bucketsAllowlist
+  bucketsAllowlist,
+  projectId
 }: UsersBackupOptions) {
   return asyncMiddleware(async (request, response) => {
     // TODO: Validate options
     const options = request.body as UsersBackupRequestOptions
-    const state = await backupUsers(options)
+    const state = await backupUsers(projectId, options)
     operationResponse(response, state)
   })
 }
 
 async function backupUsers(
+  projectId: string,
   options: UsersBackupRequestOptions
 ): Promise<UsersStatusResponse> {
   // Create bucket
@@ -39,9 +42,7 @@ async function backupUsers(
   const path = tmpPath(options.path)
 
   // Export users to a temporary file
-  await tools.auth.export(path, {
-    project: process.env.GCP_PROJECT as string
-  })
+  await tools.auth.export(path, { project: projectId })
 
   // Calculate the number of users
   const usersCount = await readFile(path, 'utf8')

@@ -12,10 +12,13 @@ type OperationResponse = {
 
 type ExportDocumentsResponse = [OperationResponse]
 
-export async function backupFirestore(options: FirestoreBackupRequestOptions) {
+export async function backupFirestore(
+  projectId: string,
+  options: FirestoreBackupRequestOptions
+) {
   const client = new firestore.v1.FirestoreAdminClient()
 
-  const databaseName = client.databasePath(process.env.GCP_PROJECT, '(default)')
+  const databaseName = client.databasePath(projectId, '(default)')
 
   // https://googleapis.dev/nodejs/firestore/latest/v1.FirestoreAdminClient.html#exportDocuments
   const [operation] = (await client.exportDocuments({
