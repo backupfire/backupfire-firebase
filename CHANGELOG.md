@@ -7,6 +7,12 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## 0.5.0 - 2019-10-19
+
+### Fixed
+
+- Fixed more incompatibilities with the Node.js v10 runtime.
+
 ## 0.4.0 - 2019-10-18
 
 ### Fixed
