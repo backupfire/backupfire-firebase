@@ -171,7 +171,13 @@ export function createApp(
   const globalOptions = { bucketsAllowlist: options.bucketsAllowlist }
 
   // Backup Firestore
-  app.post('/firestore', backupFirestoreMiddleware(globalOptions))
+  app.post(
+    '/firestore',
+    backupFirestoreMiddleware({
+      projectId: runtimeEnv.projectId,
+      ...globalOptions
+    })
+  )
   // Check Firestore backup status
   app.get('/firestore/status', checkFirestoreBackupStatusMiddleware())
 
