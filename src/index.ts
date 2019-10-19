@@ -213,7 +213,8 @@ function agentURL(runtimeEnv: RuntimeEnvironment) {
 function getRuntimeEnv(): IncompleteRuntimeEnvironment | RuntimeEnvironment {
   return {
     region: defaultRegion,
-    projectId: process.env.GCP_PROJECT,
+    // Node.js v8 runtime sets GCP_PROJECT, while v10 uses depricated GCLOUD_PROJECT
+    projectId: process.env.GCP_PROJECT || process.env.GCLOUD_PROJECT,
     // Node.js v8 runtime uses FUNCTION_NAME, v10 — FUNCTION_TARGET
     // See: https://cloud.google.com/functions/docs/env-var#environment_variables_set_automatically
     functionName: process.env.FUNCTION_NAME || process.env.FUNCTION_TARGET
