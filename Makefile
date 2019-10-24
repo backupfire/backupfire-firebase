@@ -15,7 +15,7 @@ build-test-server:
 	@${BIN}/tsc test/server/index.ts --esModuleInterop --outDir test/server/build
 
 deploy-test-server: build-test-server
-	@cd test/server && ${BIN}/firebase deploy --only functions:backup
+	@cd test/server && ${BIN}/firebase deploy --only functions:backupfire
 
 # Staging & production
 
