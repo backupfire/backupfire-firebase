@@ -192,7 +192,13 @@ export function createApp(
   // Create storage
   app.post('/storage', createStorageMiddleware(globalOptions))
   // Update storage
-  app.put('/storage/:storageId', updateStorageMiddleware(globalOptions))
+  app.put(
+    '/storage/:storageId',
+    updateStorageMiddleware({
+      adminPassword: options.adminPassword,
+      ...globalOptions
+    })
+  )
 
   return app
 }

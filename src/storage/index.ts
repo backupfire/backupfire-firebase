@@ -14,6 +14,10 @@ export function storageListMiddleware({ bucketsAllowlist }: StorageOptions) {
   })
 }
 
+export type CreateStorageOptions = {
+  bucketsAllowlist?: string[]
+}
+
 export function createStorageMiddleware({ bucketsAllowlist }: StorageOptions) {
   return asyncMiddleware(async (request, response) => {
     // TODO: Validate options
@@ -22,6 +26,11 @@ export function createStorageMiddleware({ bucketsAllowlist }: StorageOptions) {
 
     response.send([])
   })
+}
+
+export type UpdateStorageOptions = {
+  bucketsAllowlist?: string[]
+  adminPassword: string
 }
 
 type UpdateStorageRequestBody = {
@@ -33,13 +42,20 @@ type UpdateStorageRequestBody = {
 
 type KeepBackupsUnit = 'years' | 'months' | 'days'
 
-export function updateStorageMiddleware({ bucketsAllowlist }: StorageOptions) {
+export function updateStorageMiddleware({
+  bucketsAllowlist,
+  adminPassword
+}: UpdateStorageOptions) {
   return asyncMiddleware(async (request, response) => {
     // TODO: Validate options
     const storageId = request.params.storageId as string
 
     const body = request.body as UpdateStorageRequestBody
-    // TODO: Check password
+
+    if (body.password !== adminPassword) {
+      response.status(403).send({ friendlyMessage: 'Wrong admin password' })
+      return
+    }
 
     const storage = new CloudStorage()
     const bucket = storage.bucket(storageId)
