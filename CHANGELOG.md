@@ -7,6 +7,12 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## 0.6.0 - 2019-10-30
+
+### Added
+
+- Protected the storage update endpoint with admin password.
+
 ## 0.5.0 - 2019-10-19
 
 ### Fixed
