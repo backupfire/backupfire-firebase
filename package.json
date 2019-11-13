@@ -28,6 +28,8 @@
     "@types/sinon": "^7.0.13",
     "babel-loader": "^8.0.6",
     "babel-preset-power-assert": "^3.0.0",
+    "firebase-admin": "^8.7.0",
+    "firebase-functions": "^3.3.0",
     "jest": "^24.8.0",
     "power-assert": "^1.6.1",
     "prettier": "^1.17.1",
@@ -41,12 +43,14 @@
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "express-jwt": "^5.3.1",
-    "firebase-admin": "^8.5.0",
-    "firebase-functions": "^3.2.0",
     "firebase-tools": "^7.3.2",
     "googleapis": "^43.0.0",
     "jsonwebtoken": "^8.5.1",
     "mz": "^2.7.0",
     "node-fetch": "^2.6.0"
+  },
+  "peerDependencies": {
+    "firebase-admin": ">=8.5",
+    "firebase-functions": ">=3.2"
   }
 }
