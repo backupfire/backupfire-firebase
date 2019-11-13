@@ -7,6 +7,12 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## 0.7.0 - 2019-11-13
+
+### Changed
+
+- **BREAKING**: Move firebase-admin and firebase-functions to peer dependencies.
+
 ## 0.6.0 - 2019-10-30
 
 ### Added
