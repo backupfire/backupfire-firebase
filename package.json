@@ -38,13 +38,14 @@
   },
   "dependencies": {
     "@google-cloud/firestore": "^2.3.0",
-    "@google-cloud/storage": "^3.3.1",
+    "@google-cloud/storage": "^4.1.2",
+    "@sentry/node": "^5.9.0",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "express-jwt": "^5.3.1",
     "firebase-tools": "^7.3.2",
-    "googleapis": "^43.0.0",
+    "googleapis": "^45.0.0",
     "jsonwebtoken": "^8.5.1",
     "mz": "^2.7.0",
     "node-fetch": "^2.6.0"
