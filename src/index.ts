@@ -15,6 +15,7 @@ import {
   createStorageMiddleware,
   updateStorageMiddleware
 } from './storage'
+import { init as initSentry, Handlers as SentryHandlers } from '@sentry/node'
 
 export const defaultControllerDomain = 'backupfire.dev'
 
@@ -92,6 +93,11 @@ export default function backupFire() {
     )
     return dummyHandler()
   }
+
+  // Setup agent exceptions tracking to Sentry
+  initSentry({
+    dsn: 'https://18820ae312bc46c4af3b672248d8a361@sentry.io/1819926'
+  })
 
   const options = {
     controllerDomain: envConfig.domain,
@@ -199,6 +205,8 @@ export function createApp(
       ...globalOptions
     })
   )
+
+  app.use(SentryHandlers.errorHandler())
 
   return app
 }
