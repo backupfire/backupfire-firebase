@@ -7,6 +7,12 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## 0.8.0 - 2019-11-14
+
+### Added
+
+- Capture exceptions to Sentry.
+
 ## 0.7.0 - 2019-11-13
 
 ### Changed
