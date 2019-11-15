@@ -5,7 +5,8 @@ import cors from 'cors'
 import * as functions from 'firebase-functions'
 import {
   backupFirestoreMiddleware,
-  checkFirestoreBackupStatusMiddleware
+  checkFirestoreBackupStatusMiddleware,
+  getCollectionsMiddleware
 } from './firestore'
 import { backupUsersMiddleware } from './users'
 import fetch from 'node-fetch'
@@ -186,6 +187,9 @@ export function createApp(
   )
   // Check Firestore backup status
   app.get('/firestore/status', checkFirestoreBackupStatusMiddleware())
+
+  // List collections
+  app.get('/firestore/collections', getCollectionsMiddleware())
 
   // Backup Firebase users
   app.post(

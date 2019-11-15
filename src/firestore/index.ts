@@ -3,6 +3,7 @@ import asyncMiddleware from '../_lib/asyncMiddleware'
 import { backupFirestore } from './backup'
 import { checkFirestoreBackupStatus } from './status'
 import { Response } from 'express'
+import { getCollections } from './collections'
 
 export type FirestoreBackupOptions = {
   bucketsAllowlist?: string[]
@@ -46,5 +47,12 @@ async function respondWithStatus(response: Response, id: string) {
   operationResponse(response, {
     state: status.done ? 'completed' : 'pending',
     data: { id, status }
+  })
+}
+
+export function getCollectionsMiddleware() {
+  return asyncMiddleware(async (_request, response) => {
+    const collections = await getCollections()
+    response.send(collections)
   })
 }
