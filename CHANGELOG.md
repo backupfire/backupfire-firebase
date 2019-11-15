@@ -7,6 +7,16 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## 0.9.0 - 2019-11-15
+
+### Added
+
+- Add Firestore collections list endpoint.
+
+- Enable selective Firestore backups:
+  - Always specify collection ids during export, to enable selective restore.
+  - Allow specifying ignored collections during Firestore backup.
+
 ## 0.8.0 - 2019-11-14
 
 ### Added
