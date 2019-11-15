@@ -13,6 +13,7 @@ export type FirestoreBackupOptions = {
 export type FirestoreBackupRequestOptions = {
   storageId: string
   path: string
+  ignoreCollections?: string[]
 }
 
 export function backupFirestoreMiddleware({
@@ -23,10 +24,19 @@ export function backupFirestoreMiddleware({
     // TODO: Validate options
     const options = request.body as FirestoreBackupRequestOptions
 
-    // Request Firestore backup
-    const id = await backupFirestore(projectId, options)
+    const allCollections = await getCollections()
+    const { ignoreCollections } = options
+    const exportedCollections = ignoreCollections
+      ? allCollections.filter(coll => !ignoreCollections.includes(coll))
+      : allCollections
 
-    return respondWithStatus(response, id)
+    // Request Firestore backup
+    const id = await backupFirestore(projectId, exportedCollections, options)
+
+    return respondWithStatus(response, id, {
+      exportedCollections,
+      ignoredCollections: ignoreCollections || []
+    })
   })
 }
 
@@ -42,11 +52,15 @@ export function checkFirestoreBackupStatusMiddleware() {
   })
 }
 
-async function respondWithStatus(response: Response, id: string) {
+async function respondWithStatus(
+  response: Response,
+  id: string,
+  extraData: object = {}
+) {
   const status = await checkFirestoreBackupStatus(id)
   operationResponse(response, {
     state: status.done ? 'completed' : 'pending',
-    data: { id, status }
+    data: Object.assign({ id, status }, extraData)
   })
 }
 
