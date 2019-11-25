@@ -9,7 +9,7 @@ This change log follows the format documented in [Keep a CHANGELOG].
 
 ## 0.10.0 - 2019-11-25
 
-- **BREAKING**: Use `module.exports` to export the agent for CommonJS. If you import the agent using `require('').default` you'll need to drop `.default`.
+- **BREAKING**: Use `module.exports` to export the agent for CommonJS. If you import the agent using `require('@backupfire/firebase').default` you'll need to drop `.default`.
 
 ## 0.9.0 - 2019-11-15
 
