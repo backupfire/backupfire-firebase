@@ -7,6 +7,10 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## 0.10.0 - 2019
+
+- **BREAKING**: Use `module.exports` to export the agent for CommonJS. If you import the agent using `require('').default` you'll need to drop `.default`.
+
 ## 0.9.0 - 2019-11-15
 
 ### Added

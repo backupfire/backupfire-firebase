@@ -9,6 +9,10 @@ test:
 test-watch:
 	${BIN}/jest --watch
 
+test-lib:
+	node test/lib/commonjs.js
+	${BIN}/ts-node test/lib/ts.ts
+
 # Test server
 
 build-test-server:
@@ -26,5 +30,5 @@ build:
 	@cp {package.json,*.md} lib
 	@rsync --archive --prune-empty-dirs --exclude '*.ts' --relative src/./ lib
 
-publish: build
+publish: build test-lib
 	cd lib && npm publish --access public

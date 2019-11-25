@@ -75,6 +75,9 @@ type RuntimeEnvironment = {
   functionName: string
 }
 
+// Fallback for CommonJS
+module.exports = backupFire
+
 /**
  * Creates Backup Fire Firebase Functions HTTPS handler.
  *
