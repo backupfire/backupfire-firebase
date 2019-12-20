@@ -21,7 +21,7 @@
   "main": "lib/index.js",
   "homepage": "https://backupfire.dev",
   "repository": "https://github.com/backupfire/backupfire-firebase",
-  "license": "MIT",
+  "license": "BSD-3-Clause",
   "author": "Sasha Koss <koss@nocorp.me>",
   "devDependencies": {
     "@babel/core": "^7.4.5",
