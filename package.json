@@ -3,10 +3,20 @@
   "version": "0.10.0",
   "description": "Backup Fire Firebase agent",
   "keywords": [
+    "backup Firebase database",
+    "backup Firestore",
+    "backup Firebase Firestore",
+    "backup Firebase authentication",
+    "backup Firebase users",
+    "backup Firebase data",
+    "backup Google Firebase",
+    "backup",
     "Backup Fire",
     "Firebase",
     "Firestore",
-    "backup"
+    "Firebase database",
+    "Firebase authentication",
+    "Firebase users"
   ],
   "main": "lib/index.js",
   "homepage": "https://backupfire.dev",
