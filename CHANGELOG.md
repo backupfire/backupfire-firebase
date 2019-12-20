@@ -7,7 +7,15 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## 0.11.0 - 2019-12-20
+
+### Added
+
+- Added README and license.
+
 ## 0.10.0 - 2019-11-25
+
+### Changed
 
 - **BREAKING**: Use `module.exports` to export the agent for CommonJS. If you import the agent using `require('@backupfire/firebase').default` you'll need to drop `.default`.
 
