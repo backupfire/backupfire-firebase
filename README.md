@@ -32,10 +32,10 @@ TypeScript:
 
 ```ts
 // 1. Import the agent package
-const backupfireAgent = require('@backupfire/firebase')
+import backupfireAgent from '@backupfire/firebase'
 
 // 2. Create and export the agent
-exports.backupfire = backupfireAgent()
+export const backupfire = backupfireAgent()
 ```
 
 ## License
