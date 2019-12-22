@@ -16,7 +16,12 @@ import {
   createStorageMiddleware,
   updateStorageMiddleware
 } from './storage'
-import { init as initSentry, Handlers as SentryHandlers } from '@sentry/node'
+import {
+  init as initSentry,
+  configureScope as configureSentryScope,
+  Integrations as SentryIntegrations,
+  Handlers as SentryHandlers
+} from '@sentry/node'
 
 export const defaultControllerDomain = 'backupfire.dev'
 
@@ -84,6 +89,14 @@ module.exports = backupFire
  * @param options - The Backup Fire agent options
  */
 export default function backupFire() {
+  // Setup agent exceptions tracking to Sentry
+  initSentry({
+    dsn: 'https://18820ae312bc46c4af3b672248d8a361@sentry.io/1819926',
+    // release: '', // TODO: Set to the library version
+    integrations: [new SentryIntegrations.FunctionToString()],
+    defaultIntegrations: false
+  })
+
   // Derive Backup Fire options from environment configuration
 
   const envConfig = functions.config().backupfire as
@@ -97,11 +110,6 @@ export default function backupFire() {
     )
     return dummyHandler()
   }
-
-  // Setup agent exceptions tracking to Sentry
-  initSentry({
-    dsn: 'https://18820ae312bc46c4af3b672248d8a361@sentry.io/1819926'
-  })
 
   const options = {
     controllerDomain: envConfig.domain,
@@ -136,6 +144,13 @@ export default function backupFire() {
     )
     return dummyHandler()
   }
+
+  // Set additional context
+  configureSentryScope(scope => {
+    scope.setUser({ id: envConfig.token })
+    scope.setTag('project_id', runtimeEnv.projectId)
+    scope.setTag('node_version', process.version)
+  })
 
   if (options.debug) {
     console.log(
