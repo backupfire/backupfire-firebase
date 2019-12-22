@@ -7,6 +7,17 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## 0.12.0 - 2019-12-22
+
+### Changed
+
+- Ignore the emulator environment.
+
+- Improve exceptions tracking:
+  - Stop automatic exception tracking to prevent accidental user data leaks.
+  - Send additional information that could help with debugging (user ID, project ID, Node.js version).
+  - General improvements.
+
 ## 0.11.0 - 2019-12-20
 
 ### Added
