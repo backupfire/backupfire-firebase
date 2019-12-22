@@ -97,6 +97,9 @@ export default function backupFire() {
     defaultIntegrations: false
   })
 
+  // Use dummy handler if it's emulator
+  if (isEmulator()) return dummyHandler()
+
   // Derive Backup Fire options from environment configuration
 
   const envConfig = functions.config().backupfire as
@@ -259,6 +262,10 @@ function sendInitializationPing(
 function agentURL(runtimeEnv: RuntimeEnvironment) {
   const { region, projectId, functionName } = runtimeEnv
   return `https://${region}-${projectId}.cloudfunctions.net/${functionName}`
+}
+
+function isEmulator() {
+  return process.env.FUNCTIONS_EMULATOR === 'true'
 }
 
 function getRuntimeEnv(): IncompleteRuntimeEnvironment | RuntimeEnvironment {
