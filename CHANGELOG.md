@@ -7,6 +7,12 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## 0.13.0 - 2020-04-12
+
+### Added
+
+- Added the ability to specify the region via `region` option.
+
 ## 0.12.0 - 2019-12-22
 
 ### Changed

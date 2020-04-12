@@ -23,6 +23,10 @@ import {
   Handlers as SentryHandlers
 } from '@sentry/node'
 
+type Region = typeof functions.region extends (region: infer RegionType) => any
+  ? RegionType
+  : never
+
 export const defaultControllerDomain = 'backupfire.dev'
 
 export const defaultRegion = 'us-central1'
@@ -30,7 +34,12 @@ export const defaultRegion = 'us-central1'
 /**
  * Backup Fire agent options.
  */
-export type BackupFireOptions = {
+type BackupFireOptions = {
+  /**
+   * The Google Cloud region id where to deploy the Firebase function.
+   */
+  region?: Region
+
   /**
    * The controller app domain, defaults to backupfire.dev.
    */
@@ -60,6 +69,13 @@ export type BackupFireOptions = {
   debug?: boolean
 }
 
+// TODO: Split options definition to the ones coming from the environment config
+// and the user-defined agent options.
+type AgentOptions = Pick<
+  BackupFireOptions,
+  'region' | 'controllerDomain' | 'debug'
+>
+
 type BackupFireEnvConfig = {
   domain?: string
   token: string
@@ -88,7 +104,7 @@ module.exports = backupFire
  *
  * @param options - The Backup Fire agent options
  */
-export default function backupFire() {
+export default function backupFire(agentOptions?: AgentOptions) {
   // Setup agent exceptions tracking to Sentry
   initSentry({
     dsn: 'https://18820ae312bc46c4af3b672248d8a361@sentry.io/1819926',
@@ -98,7 +114,7 @@ export default function backupFire() {
   })
 
   // Use dummy handler if it's emulator
-  if (isEmulator()) return dummyHandler()
+  if (isEmulator()) return dummyHandler({ region: agentOptions?.region })
 
   // Derive Backup Fire options from environment configuration
 
@@ -111,21 +127,24 @@ export default function backupFire() {
     console.warn(
       `Warning: "backupfire" key isn't found in the Functions environment configuration. Running a dummy HTTP handler instead of the Backup Fire agent...`
     )
-    return dummyHandler()
+    return dummyHandler({ region: agentOptions?.region })
   }
 
-  const options = {
-    controllerDomain: envConfig.domain,
-    controllerToken: envConfig.token,
-    adminPassword: envConfig.password,
-    bucketsAllowlist:
-      (envConfig.allowlist && envConfig.allowlist.split(',')) || undefined,
-    debug: envConfig.debug === 'true'
-  }
+  const options: BackupFireOptions = Object.assign(
+    {
+      controllerDomain: envConfig.domain,
+      controllerToken: envConfig.token,
+      adminPassword: envConfig.password,
+      bucketsAllowlist:
+        (envConfig.allowlist && envConfig.allowlist.split(',')) || undefined,
+      debug: envConfig.debug === 'true'
+    },
+    agentOptions
+  )
 
   // Get runtime environment (Firebase project ID, region, etc)
 
-  const runtimeEnv = getRuntimeEnv()
+  const runtimeEnv = getRuntimeEnv(options)
 
   // If the function name isn't backupfire, use dummy handler
   if (runtimeEnv.functionName !== 'backupfire') {
@@ -133,7 +152,7 @@ export default function backupFire() {
       console.log(
         `The function name isn't "backupfire" (${runtimeEnv.functionName}). Running a dummy HTTP handler instead of the Backup Fire agent...`
       )
-    return dummyHandler()
+    return dummyHandler(options)
   }
 
   // If some of the variables are missing, use dummy handler
@@ -145,7 +164,7 @@ export default function backupFire() {
     console.warn(
       'Running a dummy HTTP handler instead of the Backup Fire agent...'
     )
-    return dummyHandler()
+    return dummyHandler(options)
   }
 
   // Set additional context
@@ -167,7 +186,7 @@ export default function backupFire() {
   sendInitializationPing(options, runtimeEnv)
 
   return functions
-    .region(defaultRegion)
+    .region(options.region || defaultRegion)
     .https.onRequest(createApp(runtimeEnv, options))
 }
 
@@ -268,9 +287,11 @@ function isEmulator() {
   return process.env.FUNCTIONS_EMULATOR === 'true'
 }
 
-function getRuntimeEnv(): IncompleteRuntimeEnvironment | RuntimeEnvironment {
+function getRuntimeEnv(
+  options: BackupFireOptions
+): IncompleteRuntimeEnvironment | RuntimeEnvironment {
   return {
-    region: defaultRegion,
+    region: options.region || defaultRegion,
     // Node.js v8 runtime sets GCP_PROJECT, while v10 uses depricated GCLOUD_PROJECT
     projectId: process.env.GCP_PROJECT || process.env.GCLOUD_PROJECT,
     // Node.js v8 runtime uses FUNCTION_NAME, v10 — FUNCTION_TARGET
@@ -287,9 +308,9 @@ function isCompleteRuntimeEnv(
   )
 }
 
-function dummyHandler() {
+function dummyHandler(options: Pick<BackupFireOptions, 'region'>) {
   return functions
-    .region(defaultRegion)
+    .region(options.region || defaultRegion)
     .https.onRequest((_req, resp) => resp.end())
 }
 

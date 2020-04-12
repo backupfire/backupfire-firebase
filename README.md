@@ -38,6 +38,18 @@ import backupfireAgent from '@backupfire/firebase'
 export const backupfire = backupfireAgent()
 ```
 
+Specify the region to deploy the agent function:
+
+```ts
+import backupfireAgent from '@backupfire/firebase'
+
+export const backupfire = backupfireAgent({
+  // See the list of available regions:
+  // https://firebase.google.com/docs/functions/locations
+  region: 'europe-west3'
+})
+```
+
 ## License
 
 [BSD 3-Clause © Backup Fire](./LICENSE.md)

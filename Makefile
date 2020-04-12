@@ -32,3 +32,6 @@ build:
 
 publish: build test-lib
 	cd lib && npm publish --access public
+
+publish-next: build
+	cd lib && npm publish --access public --tag next
