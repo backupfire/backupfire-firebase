@@ -14,7 +14,7 @@ type ExportDocumentsResponse = [OperationResponse]
 
 export async function backupFirestore(
   projectId: string,
-  collectionIds: string[],
+  collectionIds: string[] | undefined,
   options: FirestoreBackupRequestOptions
 ) {
   const client = new firestore.v1.FirestoreAdminClient()

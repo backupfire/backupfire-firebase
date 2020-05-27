@@ -13,8 +13,16 @@ export type FirestoreBackupOptions = {
 export type FirestoreBackupRequestOptions = {
   storageId: string
   path: string
-  ignoreCollections?: string[]
-}
+} & (
+  | {
+      mode: 'complete'
+    }
+  | {
+      mode: 'selective'
+      ignoreCollections?: string[]
+      collectionGroups?: string[]
+    }
+)
 
 export function backupFirestoreMiddleware({
   bucketsAllowlist,
@@ -24,19 +32,28 @@ export function backupFirestoreMiddleware({
     // TODO: Validate options
     const options = request.body as FirestoreBackupRequestOptions
 
-    const allCollections = await getCollections()
-    const { ignoreCollections } = options
-    const exportedCollections = ignoreCollections
-      ? allCollections.filter(coll => !ignoreCollections.includes(coll))
-      : allCollections
+    if (options.mode === 'selective') {
+      // Get all root-level collections
+      const allCollections = await getCollections()
+      const { ignoreCollections, collectionGroups } = options
+      const exportedCollections = (ignoreCollections
+        ? allCollections.filter(coll => !ignoreCollections.includes(coll))
+        : allCollections
+      ).concat(collectionGroups || [])
 
-    // Request Firestore backup
-    const id = await backupFirestore(projectId, exportedCollections, options)
+      // Request selective Firestore backup
+      const id = await backupFirestore(projectId, exportedCollections, options)
 
-    return respondWithStatus(response, id, {
-      exportedCollections,
-      ignoredCollections: ignoreCollections || []
-    })
+      return respondWithStatus(response, id, {
+        exportedCollections,
+        ignoredCollections: ignoreCollections || []
+      })
+    } else {
+      // Request complete Firestore backup
+      const id = await backupFirestore(projectId, undefined, options)
+
+      return respondWithStatus(response, id)
+    }
   })
 }
 

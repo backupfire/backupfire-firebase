@@ -7,6 +7,18 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## 0.14.0 - 2020-05-27
+
+### Changed
+
+- Unless explicitly specified, make complete Firestore database backup by default.
+
+### Added
+
+- Added the ability to choose between complete and selective Firestore backups.
+
+- Added the ability to specify collection groups when selective Firestore backup is chosen.
+
 ## 0.13.0 - 2020-04-12
 
 ### Added
