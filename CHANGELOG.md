@@ -7,6 +7,12 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## 0.15.0 - 2020-06-18
+
+### Changed
+
+- Upgraded `firebase-tools` to the latest version (v8).
+
 ## 0.14.0 - 2020-05-27
 
 ### Changed

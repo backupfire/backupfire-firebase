@@ -1,6 +1,6 @@
 {
   "name": "@backupfire/firebase",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "Backup Fire Firebase agent",
   "keywords": [
     "backup Firebase database",
@@ -55,7 +55,7 @@
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "express-jwt": "^5.3.1",
-    "firebase-tools": "^7.3.2",
+    "firebase-tools": "8",
     "googleapis": "^45.0.0",
     "jsonwebtoken": "^8.5.1",
     "mz": "^2.7.0",
