@@ -7,7 +7,7 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
-## 0.16.0 - 2020-07-14
+## 0.17.0 - 2020-07-14
 
 ### Fixed
 
@@ -16,6 +16,10 @@ This change log follows the format documented in [Keep a CHANGELOG].
 ### Changed
 
 - Improve the behavior of the agent crashed during initialization.
+
+## 0.16.0 - 2020-06-20
+
+- Upgraded `@google-cloud/firestore` to the latest version (v3).
 
 ## 0.15.0 - 2020-06-18
 
