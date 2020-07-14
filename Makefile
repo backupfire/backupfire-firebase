@@ -27,7 +27,8 @@ build:
 	@rm -rf lib
 	@${BIN}/tsc
 	@${BIN}/prettier "lib/**/*.[jt]s" --write --loglevel silent
-	@cp {package.json,*.md} lib
+	@cp package.json lib
+	@cp *.md lib
 	@rsync --archive --prune-empty-dirs --exclude '*.ts' --relative src/./ lib
 
 publish: build test-lib
