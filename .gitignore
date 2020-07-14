@@ -2,7 +2,7 @@
 node_modules
 yarn-error.log
 
-lib
+/lib
 /secrets
 .envrc
 
