@@ -17,6 +17,10 @@ This change log follows the format documented in [Keep a CHANGELOG].
 
 - Improve the behavior of the agent crashed during initialization.
 
+### Added
+
+- Send more information with the ping request: agent and Node.js versions, and the current region.
+
 ## 0.16.0 - 2020-06-20
 
 - Upgraded `@google-cloud/firestore` to the latest version (v3).

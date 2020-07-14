@@ -1,6 +1,7 @@
 import { NodeClient, Hub, Integrations } from '@sentry/node'
 import { ErrorRequestHandler, response } from 'express'
 import * as functions from 'firebase-functions'
+import version from '../../version'
 
 let client: NodeClient
 let hub: Hub
@@ -8,7 +9,7 @@ let hub: Hub
 export function initExceptionsTracker() {
   client = new NodeClient({
     dsn: 'https://18820ae312bc46c4af3b672248d8a361@sentry.io/1819926',
-    // release: '', // TODO: Set to the library version
+    release: version,
     integrations: [new Integrations.FunctionToString()],
     defaultIntegrations: false
   })

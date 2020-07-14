@@ -19,10 +19,10 @@ import {
 import {
   initExceptionsTracker,
   configureExceptionsScope,
-  captureException,
   exceptionHandlerMiddleware,
   createCrashedApp
 } from './_lib/exceptions'
+import version from './version'
 
 type Region = typeof functions.region extends (region: infer RegionType) => any
   ? RegionType
@@ -266,11 +266,9 @@ function sendInitializationPing(
     protocol: 'https',
     pathname: '/ping',
     query: {
-      // TODO: Send more data:
-      // - Agent version
-      // - Node.js version
-      // - Function region
-      // - Something else?
+      version,
+      nodeVersion: process.version,
+      region: options.region || defaultRegion,
       token: options.controllerToken,
       projectId: runtimeEnv.projectId,
       agentURL: agentURL(runtimeEnv)
