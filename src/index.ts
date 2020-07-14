@@ -266,7 +266,7 @@ function sendInitializationPing(
     protocol: 'https',
     pathname: '/ping',
     query: {
-      version,
+      agentVersion: version,
       nodeVersion: process.version,
       region: options.region || defaultRegion,
       token: options.controllerToken,
