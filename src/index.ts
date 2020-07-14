@@ -17,11 +17,12 @@ import {
   updateStorageMiddleware
 } from './storage'
 import {
-  init as initSentry,
-  configureScope as configureSentryScope,
-  Integrations as SentryIntegrations,
-  Handlers as SentryHandlers
-} from '@sentry/node'
+  initExceptionsTracker,
+  configureExceptionsScope,
+  captureException,
+  exceptionHandlerMiddleware,
+  createCrashedApp
+} from './_lib/exceptions'
 
 type Region = typeof functions.region extends (region: infer RegionType) => any
   ? RegionType
@@ -105,89 +106,89 @@ module.exports = backupFire
  * @param options - The Backup Fire agent options
  */
 export default function backupFire(agentOptions?: AgentOptions) {
-  // Setup agent exceptions tracking to Sentry
-  initSentry({
-    dsn: 'https://18820ae312bc46c4af3b672248d8a361@sentry.io/1819926',
-    // release: '', // TODO: Set to the library version
-    integrations: [new SentryIntegrations.FunctionToString()],
-    defaultIntegrations: false
-  })
+  initExceptionsTracker()
 
-  // Use dummy handler if it's emulator
-  if (isEmulator()) return dummyHandler({ region: agentOptions?.region })
+  try {
+    // Use dummy handler if it's emulator
+    if (isEmulator()) return dummyHandler({ region: agentOptions?.region })
 
-  // Derive Backup Fire options from environment configuration
+    // Derive Backup Fire options from environment configuration
 
-  const envConfig = functions.config().backupfire as
-    | BackupFireEnvConfig
-    | undefined
+    const envConfig = functions.config().backupfire as
+      | BackupFireEnvConfig
+      | undefined
 
-  // If options aren't set, use  dummy handler instead
-  if (!envConfig) {
-    console.warn(
-      `Warning: "backupfire" key isn't found in the Functions environment configuration. Running a dummy HTTP handler instead of the Backup Fire agent...`
-    )
-    return dummyHandler({ region: agentOptions?.region })
-  }
-
-  const options: BackupFireOptions = Object.assign(
-    {
-      controllerDomain: envConfig.domain,
-      controllerToken: envConfig.token,
-      adminPassword: envConfig.password,
-      bucketsAllowlist:
-        (envConfig.allowlist && envConfig.allowlist.split(',')) || undefined,
-      debug: envConfig.debug === 'true'
-    },
-    agentOptions
-  )
-
-  // Get runtime environment (Firebase project ID, region, etc)
-
-  const runtimeEnv = getRuntimeEnv(options)
-
-  // If the function name isn't backupfire, use dummy handler
-  if (runtimeEnv.functionName !== 'backupfire') {
-    if (options.debug)
-      console.log(
-        `The function name isn't "backupfire" (${runtimeEnv.functionName}). Running a dummy HTTP handler instead of the Backup Fire agent...`
+    // If options aren't set, use  dummy handler instead
+    if (!envConfig) {
+      console.warn(
+        `Warning: "backupfire" key isn't found in the Functions environment configuration. Running a dummy HTTP handler instead of the Backup Fire agent...`
       )
-    return dummyHandler(options)
-  }
+      return dummyHandler({ region: agentOptions?.region })
+    }
 
-  // If some of the variables are missing, use dummy handler
-  if (!isCompleteRuntimeEnv(runtimeEnv)) {
-    console.warn(
-      'Warning: runtime environment is incomplete:',
-      prettyJSON(runtimeEnv)
+    const options: BackupFireOptions = Object.assign(
+      {
+        controllerDomain: envConfig.domain,
+        controllerToken: envConfig.token,
+        adminPassword: envConfig.password,
+        bucketsAllowlist:
+          (envConfig.allowlist && envConfig.allowlist.split(',')) || undefined,
+        debug: envConfig.debug === 'true'
+      },
+      agentOptions
     )
-    console.warn(
-      'Running a dummy HTTP handler instead of the Backup Fire agent...'
-    )
-    return dummyHandler(options)
+
+    // Get runtime environment (Firebase project ID, region, etc)
+
+    const runtimeEnv = getRuntimeEnv(options)
+
+    // If the function name isn't backupfire, use dummy handler
+    if (runtimeEnv.functionName !== 'backupfire') {
+      if (options.debug)
+        console.log(
+          `The function name isn't "backupfire" (${runtimeEnv.functionName}). Running a dummy HTTP handler instead of the Backup Fire agent...`
+        )
+      return dummyHandler(options)
+    }
+
+    // If some of the variables are missing, use dummy handler
+    if (!isCompleteRuntimeEnv(runtimeEnv)) {
+      console.warn(
+        'Warning: runtime environment is incomplete:',
+        prettyJSON(runtimeEnv)
+      )
+      console.warn(
+        'Running a dummy HTTP handler instead of the Backup Fire agent...'
+      )
+      return dummyHandler(options)
+    }
+
+    // Set additional context
+    configureExceptionsScope(scope => {
+      scope.setUser({ id: envConfig.token })
+      scope.setTag('project_id', runtimeEnv.projectId)
+      scope.setTag('node_version', process.version)
+    })
+
+    if (options.debug) {
+      console.log(
+        'Initializing Backup Fire agent with options:',
+        prettyJSON(options)
+      )
+      console.log('Runtime environment:', prettyJSON(runtimeEnv))
+    }
+
+    // Send the initialization ping to the controller
+    sendInitializationPing(options, runtimeEnv)
+
+    return functions
+      .region(options.region || defaultRegion)
+      .https.onRequest(createApp(runtimeEnv, options))
+  } catch (err) {
+    return functions
+      .region(agentOptions?.region || defaultRegion)
+      .https.onRequest(createCrashedApp(err))
   }
-
-  // Set additional context
-  configureSentryScope(scope => {
-    scope.setUser({ id: envConfig.token })
-    scope.setTag('project_id', runtimeEnv.projectId)
-    scope.setTag('node_version', process.version)
-  })
-
-  if (options.debug) {
-    console.log(
-      'Initializing Backup Fire agent with options:',
-      prettyJSON(options)
-    )
-    console.log('Runtime environment:', prettyJSON(runtimeEnv))
-  }
-
-  // Send the initialization ping to the controller
-  sendInitializationPing(options, runtimeEnv)
-
-  return functions
-    .region(options.region || defaultRegion)
-    .https.onRequest(createApp(runtimeEnv, options))
 }
 
 /**
@@ -250,7 +251,7 @@ export function createApp(
     })
   )
 
-  app.use(SentryHandlers.errorHandler())
+  app.use(exceptionHandlerMiddleware)
 
   return app
 }
