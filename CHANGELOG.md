@@ -7,6 +7,12 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## 0.18.0 - 2020-07-17
+
+### Changed
+
+- Accurately detect if the agent code is executed in a non-Functions environment (i.e., emulator or tests code) and suppress warnings.
+
 ## 0.17.0 - 2020-07-14
 
 ### Fixed

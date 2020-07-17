@@ -109,8 +109,9 @@ export default function backupFire(agentOptions?: AgentOptions) {
   initExceptionsTracker()
 
   try {
-    // Use dummy handler if it's emulator
-    if (isEmulator()) return dummyHandler({ region: agentOptions?.region })
+    // Use dummy handler if it's emulator or not deployed to Functions
+    if (isEmulator() || !isDeployedToFunctions())
+      return dummyHandler({ region: agentOptions?.region })
 
     // Derive Backup Fire options from environment configuration
 
@@ -284,6 +285,12 @@ function agentURL(runtimeEnv: RuntimeEnvironment) {
 
 function isEmulator() {
   return process.env.FUNCTIONS_EMULATOR === 'true'
+}
+
+function isDeployedToFunctions() {
+  // Detect if the agent is deployed to Firebase Functions
+  // See: https://cloud.google.com/functions/docs/env-var#environment_variables_set_automatically
+  return !!process.env.FUNCTION_NAME || !!process.env.FUNCTION_TARGET
 }
 
 function getRuntimeEnv(
