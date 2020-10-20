@@ -1,11 +1,12 @@
 import * as functions from 'firebase-functions'
 import * as admin from 'firebase-admin'
-// 1. Import the agent package
+// 1. Import the agent package.
+// Make sure that you have esModuleInterop set to true in compilerOptions in your tsconfig.json!
 import backupfireAgent from '@backupfire/firebase'
 
 admin.initializeApp()
 
-exports.helloWorld = functions.https.onRequest((_request, response) => {
+export const helloWorld = functions.https.onRequest((_request, response) => {
   response.send('Hello from Firebase!')
 })
 
