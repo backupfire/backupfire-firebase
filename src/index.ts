@@ -23,10 +23,13 @@ import {
   createCrashedApp
 } from './_lib/exceptions'
 import version from './version'
+import { VALID_MEMORY_OPTIONS } from 'firebase-functions'
 
 type Region = typeof functions.region extends (region: infer RegionType) => any
   ? RegionType
   : never
+
+type Memory = typeof VALID_MEMORY_OPTIONS[number]
 
 export const defaultControllerDomain = 'backupfire.dev'
 
@@ -40,6 +43,11 @@ type BackupFireOptions = {
    * The Google Cloud region id where to deploy the Firebase function.
    */
   region?: Region
+
+  /**
+   * The agent function memory limit, defaults to "256MB".
+   */
+  memory?: Memory
 
   /**
    * The controller app domain, defaults to backupfire.dev.
@@ -74,7 +82,7 @@ type BackupFireOptions = {
 // and the user-defined agent options.
 type AgentOptions = Pick<
   BackupFireOptions,
-  'region' | 'controllerDomain' | 'debug'
+  'region' | 'controllerDomain' | 'debug' | 'memory'
 >
 
 type BackupFireEnvConfig = {
@@ -187,6 +195,7 @@ export default function backupFire(agentOptions?: AgentOptions) {
       .https.onRequest(createApp(runtimeEnv, options))
   } catch (err) {
     return functions
+      .runWith({ memory: agentOptions?.memory })
       .region(agentOptions?.region || defaultRegion)
       .https.onRequest(createCrashedApp(err))
   }

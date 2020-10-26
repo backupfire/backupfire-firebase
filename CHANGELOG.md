@@ -7,6 +7,12 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## 0.19.0 - 2020-10-26
+
+### Added
+
+- Added `memory` to the agent options to allow configuring the memory limit.
+
 ## 0.18.0 - 2020-07-17
 
 ### Changed
