@@ -45,21 +45,20 @@
     "prettier": "^1.17.1",
     "sinon": "^7.3.2",
     "ts-node": "^8.5.2",
-    "typescript": "^3.6.2"
+    "typescript": "4"
   },
   "dependencies": {
-    "@google-cloud/firestore": "3",
-    "@google-cloud/storage": "^4.1.2",
-    "@sentry/node": "^5.9.0",
+    "@google-cloud/firestore": "^4.8.1",
+    "@google-cloud/storage": "^5.7.1",
+    "@sentry/node": "^5.30.0",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "express-jwt": "^6.0.0",
-    "firebase-tools": "8",
-    "googleapis": "^45.0.0",
+    "firebase-tools": "^9.2.0",
+    "googleapis": "^67",
     "jsonwebtoken": "^8.5.1",
-    "mz": "^2.7.0",
-    "node-fetch": "^2.6.0"
+    "node-fetch": "^2.6.1"
   },
   "peerDependencies": {
     "firebase-admin": ">=8.5",

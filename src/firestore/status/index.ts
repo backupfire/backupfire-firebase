@@ -1,5 +1,4 @@
 import { google } from 'googleapis'
-import { FirestoreCheckBackupStatusRequestOptions } from '..'
 import { GaxiosPromise } from 'gaxios'
 
 type OperationProgressWork = {

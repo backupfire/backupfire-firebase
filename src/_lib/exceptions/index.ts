@@ -1,5 +1,5 @@
-import { NodeClient, Hub, Integrations } from '@sentry/node'
-import { ErrorRequestHandler, response } from 'express'
+import { Hub, Integrations, NodeClient } from '@sentry/node'
+import { ErrorRequestHandler } from 'express'
 import * as functions from 'firebase-functions'
 import version from '../../version'
 
@@ -33,7 +33,7 @@ export const exceptionHandlerMiddleware: ErrorRequestHandler = (
 ) => {
   configureExceptionsScope(scope => {
     scope.setUser({ ip_address: request.ip })
-    scope.setContext('request', request)
+    scope.setContext('request', request as any)
   })
   captureException(err)
   next(err)

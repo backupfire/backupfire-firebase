@@ -2,12 +2,15 @@ import * as tools from 'firebase-tools'
 import * as admin from 'firebase-admin'
 import { tmpdir } from 'os'
 import { resolve, parse } from 'path'
-import { unlink } from 'mz/fs'
 import operationResponse, {
   UsersStatusResponse
 } from '../_lib/operationSuccess'
 import asyncMiddleware from '../_lib/asyncMiddleware'
-import { readFile } from 'mz/fs'
+import { promisify } from 'util'
+import fs from 'fs'
+
+const unlink = promisify(fs.unlink)
+const readFile = promisify(fs.readFile)
 
 export type UsersBackupOptions = {
   bucketsAllowlist?: string[]
