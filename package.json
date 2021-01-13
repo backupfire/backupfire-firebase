@@ -40,7 +40,7 @@
     "babel-preset-power-assert": "^3.0.0",
     "firebase-admin": "^9",
     "firebase-functions": "^3.3.0",
-    "jest": "^24.8.0",
+    "jest": "^26",
     "power-assert": "^1.6.1",
     "prettier": "^1.17.1",
     "sinon": "^7.3.2",
