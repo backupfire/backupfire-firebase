@@ -7,6 +7,14 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## 1.0.0 - 2021-01-13
+
+### Changed
+
+- Upgraded dependencies to address the dependabot alerts.
+
+- Upgraded peer dependency `firebase-admin` to `>=9`.
+
 ## 0.19.0 - 2020-10-26
 
 ### Added
