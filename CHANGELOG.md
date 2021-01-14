@@ -7,6 +7,12 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## 1.0.1 - 2021-01-14
+
+### Fixed
+
+- Fixed an issue with `express-jwt` failing without specifying `algorithms`.
+
 ## 1.0.0 - 2021-01-13
 
 ### Changed

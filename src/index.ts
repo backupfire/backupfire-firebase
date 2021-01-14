@@ -218,7 +218,7 @@ export function createApp(
   const app = express()
 
   // Protect Backup Fire API with token authorization
-  app.use(jwt({ secret: options.controllerToken }))
+  app.use(jwt({ secret: options.controllerToken, algorithms: ['HS256'] }))
 
   // Parse JSON body
   app.use(bodyParser.json())
