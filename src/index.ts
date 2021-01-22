@@ -191,6 +191,7 @@ export default function backupFire(agentOptions?: AgentOptions) {
     sendInitializationPing(options, runtimeEnv)
 
     return functions
+      .runWith({ memory: agentOptions?.memory })
       .region(options.region || defaultRegion)
       .https.onRequest(createApp(runtimeEnv, options))
   } catch (err) {

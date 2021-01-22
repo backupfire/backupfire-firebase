@@ -7,6 +7,12 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## 1.0.2 - 2021-01-22
+
+### Fixed
+
+- Fixed the `memory` option in the agent that previously wasn't properly applied.
+
 ## 1.0.1 - 2021-01-14
 
 ### Fixed
