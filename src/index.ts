@@ -50,6 +50,11 @@ type BackupFireOptions = {
   memory?: Memory
 
   /**
+   * The agent function timeout in seconds, defaults to 60.
+   */
+  timeout?: number
+
+  /**
    * The controller app domain, defaults to backupfire.dev.
    */
   controllerDomain?: string
@@ -82,7 +87,7 @@ type BackupFireOptions = {
 // and the user-defined agent options.
 type AgentOptions = Pick<
   BackupFireOptions,
-  'region' | 'controllerDomain' | 'debug' | 'memory'
+  'region' | 'controllerDomain' | 'debug' | 'memory' | 'timeout'
 >
 
 type BackupFireEnvConfig = {
@@ -119,7 +124,11 @@ export default function backupFire(agentOptions?: AgentOptions) {
   try {
     // Use dummy handler if it's emulator or not deployed to Functions
     if (isEmulator() || !isDeployedToFunctions())
-      return dummyHandler({ region: agentOptions?.region })
+      return dummyHandler({
+        region: agentOptions?.region,
+        memory: agentOptions?.memory,
+        timeout: agentOptions?.timeout
+      })
 
     // Derive Backup Fire options from environment configuration
 
@@ -191,12 +200,18 @@ export default function backupFire(agentOptions?: AgentOptions) {
     sendInitializationPing(options, runtimeEnv)
 
     return functions
-      .runWith({ memory: agentOptions?.memory })
+      .runWith({
+        memory: agentOptions?.memory,
+        timeoutSeconds: agentOptions?.timeout
+      })
       .region(options.region || defaultRegion)
       .https.onRequest(createApp(runtimeEnv, options))
   } catch (err) {
     return functions
-      .runWith({ memory: agentOptions?.memory })
+      .runWith({
+        memory: agentOptions?.memory,
+        timeoutSeconds: agentOptions?.timeout
+      })
       .region(agentOptions?.region || defaultRegion)
       .https.onRequest(createCrashedApp(err))
   }
@@ -324,8 +339,14 @@ function isCompleteRuntimeEnv(
   )
 }
 
-function dummyHandler(options: Pick<BackupFireOptions, 'region'>) {
+function dummyHandler(
+  options: Pick<BackupFireOptions, 'region' | 'memory' | 'timeout'>
+) {
   return functions
+    .runWith({
+      memory: options.memory,
+      timeoutSeconds: options.timeout
+    })
     .region(options.region || defaultRegion)
     .https.onRequest((_req, resp) => resp.end())
 }

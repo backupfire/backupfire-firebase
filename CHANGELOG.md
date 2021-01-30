@@ -7,6 +7,16 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## 1.0.3 - 2021-01-30
+
+### Fixed
+
+- Finally fixed the `memory` option.
+
+### Added
+
+- Added `timeout` option that allows to set the agent timeout in seconds (defaults to `60`; max `540`).
+
 ## 1.0.2 - 2021-01-22
 
 ### Fixed
