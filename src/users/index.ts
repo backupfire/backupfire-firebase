@@ -2,9 +2,7 @@ import * as tools from 'firebase-tools'
 import * as admin from 'firebase-admin'
 import { tmpdir } from 'os'
 import { resolve, parse } from 'path'
-import operationResponse, {
-  UsersStatusResponse
-} from '../_lib/operationSuccess'
+import operationResponse, { UsersStatusResponse } from '../_lib/operation'
 import asyncMiddleware from '../_lib/asyncMiddleware'
 import { promisify } from 'util'
 import fs from 'fs'
@@ -24,7 +22,7 @@ export type UsersBackupRequestOptions = {
 
 export function backupUsersMiddleware({
   bucketsAllowlist,
-  projectId
+  projectId,
 }: UsersBackupOptions) {
   return asyncMiddleware(async (request, response) => {
     // TODO: Validate options
@@ -52,7 +50,7 @@ async function backupUsers(
     .then(JSON.parse)
     .then(({ users }: { users: any[] }) => users.length)
     // TODO: Add to log
-    .catch(_err => undefined)
+    .catch((_err) => undefined)
 
   // Parsing has failed, the exported file is unreadable
   if (usersCount === undefined) {
@@ -61,7 +59,7 @@ async function backupUsers(
 
     return {
       state: 'failed',
-      data: { reason: 'Failed to parse the backup file' }
+      data: { reason: 'Failed to parse the backup file' },
     }
   }
 

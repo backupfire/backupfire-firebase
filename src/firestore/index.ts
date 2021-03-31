@@ -1,4 +1,4 @@
-import operationResponse from '../_lib/operationSuccess'
+import operationResponse from '../_lib/operation'
 import asyncMiddleware from '../_lib/asyncMiddleware'
 import { backupFirestore } from './backup'
 import { checkFirestoreBackupStatus } from './status'
@@ -26,7 +26,7 @@ export type FirestoreBackupRequestOptions = {
 
 export function backupFirestoreMiddleware({
   bucketsAllowlist,
-  projectId
+  projectId,
 }: FirestoreBackupOptions) {
   return asyncMiddleware(async (request, response) => {
     // TODO: Validate options
@@ -37,22 +37,30 @@ export function backupFirestoreMiddleware({
       const allCollections = await getCollections()
       const { ignoreCollections, collectionGroups } = options
       const exportedCollections = (ignoreCollections
-        ? allCollections.filter(coll => !ignoreCollections.includes(coll))
+        ? allCollections.filter((coll) => !ignoreCollections.includes(coll))
         : allCollections
       ).concat(collectionGroups || [])
 
       // Request selective Firestore backup
       const id = await backupFirestore(projectId, exportedCollections, options)
 
-      return respondWithStatus(response, id, {
-        exportedCollections,
-        ignoredCollections: ignoreCollections || []
-      })
+      if (id) {
+        return respondWithStatus(response, id, {
+          exportedCollections,
+          ignoredCollections: ignoreCollections || [],
+        })
+      } else {
+        return respondWithMissingId(response)
+      }
     } else {
       // Request complete Firestore backup
       const id = await backupFirestore(projectId, undefined, options)
 
-      return respondWithStatus(response, id)
+      if (id) {
+        return respondWithStatus(response, id)
+      } else {
+        return respondWithMissingId(response)
+      }
     }
   })
 }
@@ -77,7 +85,17 @@ async function respondWithStatus(
   const status = await checkFirestoreBackupStatus(id)
   operationResponse(response, {
     state: status.done ? 'completed' : 'pending',
-    data: Object.assign({ id, status }, extraData)
+    data: Object.assign({ id, status }, extraData),
+  })
+}
+
+function respondWithMissingId(response: Response) {
+  operationResponse(response, {
+    state: 'failed',
+    data: {
+      reason:
+        'Firestore backup failed to initiate: the operation response has no id.',
+    },
   })
 }
 
