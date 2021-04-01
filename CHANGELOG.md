@@ -7,6 +7,12 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## 1.1.0 - 2021-04-01
+
+### Changed
+
+- Updated dependencies.
+
 ## 1.0.3 - 2021-01-30
 
 ### Fixed

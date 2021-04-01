@@ -1,6 +1,6 @@
 {
   "name": "@backupfire/firebase",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "Backup Fire Firebase agent",
   "keywords": [
     "backup Firebase database",
@@ -61,7 +61,7 @@
     "node-fetch": "^2.6.1"
   },
   "peerDependencies": {
-    "firebase-admin": ">=9",
-    "firebase-functions": ">=3.2"
+    "firebase-admin": ">=9.6",
+    "firebase-functions": ">=3.13.2"
   }
 }
