@@ -1,0 +1,77 @@
+name: backupfire
+version: 0.1.0
+specVersion: v1beta
+
+displayName: Backup Fire Agent
+description: Backup your Firestore and Firebase Authentication data
+
+license: apache-2.0
+
+author:
+  authorName: Sasha Koss
+  url: https://github.com/kossnocorp
+
+billingRequired: true
+
+params:
+  - param: LOCATION
+    label: Where's your Firestore is deployed?
+    description: >-
+      Where's your Firestore is deployed? You can find it on the bottom of this
+      page: https://console.firebase.google.com/project/_/firestore. Pick
+      project and search for "Cloud Firestore location:" label.
+    type: select
+    options:
+      - label: Iowa (us-central1) / United States (nam5)
+        value: us-central1
+      - label: South Carolina (us-east1)
+        value: us-east1
+      - label: Northern Virginia (us-east4)
+        value: us-east4
+      - label: Belgium (europe-west1) / Europe (eur3)
+        value: europe-west1
+      - label: London (europe-west2)
+        value: europe-west2
+      - label: Frankfurt (europe-west3)
+        value: europe-west3
+      - label: Hong Kong (asia-east2)
+        value: asia-east2
+      - label: Tokyo (asia-northeast1)
+        value: asia-northeast1
+    default: us-central1
+    required: true
+    immutable: true
+
+  - param: BACKUPFIRE_TOKEN
+    label: Agent token
+    description: >-
+      The token is used to secure a connection between the controller
+      (BackupFire) and the agent (this extension). Used to perform backups,
+      retrieve meta information, etc.
+    type: string
+    required: true
+
+  - param: BACKUPFIRE_PASSWORD
+    label: Admin password
+    description: >-
+      The admin password is used as an extra layer of protection and ensures
+      that only you can perform destructive operations such as retention policy
+      change. The password is not stored on the Backup Fire side.
+    type: string
+    required: true
+
+roles:
+  - role: datastore.importExportAdmin
+    reason: Allows to export Firestore data
+  - role: firebaseauth.admin
+    reason: Allows to export Firebase Authentication data
+  - role: storage.admin
+    reason: Allows to adjust retention policy
+
+resources:
+  - name: backupfire
+    type: firebaseextensions.v1beta.function
+    properties:
+      location: ${LOCATION}
+      runtime: nodejs14
+      httpsTrigger: {}

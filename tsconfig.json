@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "rootDirs": ["src"],
+    "rootDir": "src",
     "declaration": true,
     "target": "es6",
     "module": "commonjs",
@@ -9,7 +9,14 @@
     "strict": true,
     "noImplicitAny": true,
     "esModuleInterop": true,
-    "resolveJsonModule": true,
+    "resolveJsonModule": true
   },
-  "exclude": ["**/test.ts", "lib", "node_modules", "test", "examples"]
+  "exclude": [
+    "**/test.ts",
+    "lib",
+    "node_modules",
+    "test",
+    "examples",
+    "extension"
+  ]
 }

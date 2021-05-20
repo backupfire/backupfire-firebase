@@ -6,6 +6,5 @@ yarn-error.log
 /secrets
 .envrc
 
-# Test server
-/test/server/build
-/test/server/.firebaserc
+# Extension
+/extension/functions/lib
