@@ -8,3 +8,4 @@ yarn-error.log
 
 # Extension
 /extension/functions/lib
+/extension/firebase-debug.log

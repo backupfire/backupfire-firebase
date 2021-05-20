@@ -9,9 +9,9 @@ This is open-source core of [Backup Fire](https://backupfire.dev) packed as a Fi
 To install the agent extension, please execute the command below in the project directory. You can also specify the project ID using the argument: `--project=PROJECT_ID`.
 
 ```bash
-firebase ext:install backupfire/agent
+firebase ext:install backupfire/backupfire-agent
 # or with project ID:
-firebase ext:install backupfire/agent --project=PROJECT_ID
+firebase ext:install backupfire/backupfire-agent --project=PROJECT_ID
 ```
 
 During the installation you'll need to pick:

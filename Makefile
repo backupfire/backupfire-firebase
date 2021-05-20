@@ -36,3 +36,9 @@ publish: build test-lib
 
 publish-next: build
 	cd lib && npm publish --access public --tag next
+
+build-extension:
+	@cd extension/functions && npm run build
+
+publish-extension: build-extension
+	@cd extension && firebase ext:dev:publish backupfire/backupfire-agent
