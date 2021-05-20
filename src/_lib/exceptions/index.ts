@@ -1,6 +1,7 @@
 import { Hub, Integrations, NodeClient } from '@sentry/node'
 import { ErrorRequestHandler } from 'express'
 import * as functions from 'firebase-functions'
+import { BackupFireHTTPSHandler } from '../../types'
 import version from '../../version'
 
 let client: NodeClient
@@ -11,7 +12,7 @@ export function initExceptionsTracker() {
     dsn: 'https://18820ae312bc46c4af3b672248d8a361@sentry.io/1819926',
     release: version,
     integrations: [new Integrations.FunctionToString()],
-    defaultIntegrations: false
+    defaultIntegrations: false,
   })
   hub = new Hub(client)
 }
@@ -31,7 +32,7 @@ export const exceptionHandlerMiddleware: ErrorRequestHandler = (
   _response,
   next
 ) => {
-  configureExceptionsScope(scope => {
+  configureExceptionsScope((scope) => {
     scope.setUser({ ip_address: request.ip })
     scope.setContext('request', request as any)
   })
@@ -39,11 +40,11 @@ export const exceptionHandlerMiddleware: ErrorRequestHandler = (
   next(err)
 }
 
-export function createCrashedApp(err: any) {
+export function createCrashedApp(err: any): BackupFireHTTPSHandler {
   return (_request: functions.Request, response: functions.Response) => {
     const eventId = captureException(err)
     response.status(500).send({
-      message: `The Backup Fire agent has failed to initialiaze (see event ${eventId})`
+      message: `The Backup Fire agent has failed to initialiaze (see event ${eventId})`,
     })
   }
 }

@@ -1,114 +1,39 @@
 import bodyParser from 'body-parser'
+import cors from 'cors'
 import express from 'express'
 import jwt from 'express-jwt'
-import cors from 'cors'
 import * as functions from 'firebase-functions'
-import {
-  backupFirestoreMiddleware,
-  checkFirestoreBackupStatusMiddleware,
-  getCollectionsMiddleware
-} from './firestore'
-import { backupUsersMiddleware } from './users'
 import fetch from 'node-fetch'
 import { format } from 'url'
 import {
-  storageListMiddleware,
+  backupFirestoreMiddleware,
+  checkFirestoreBackupStatusMiddleware,
+  getCollectionsMiddleware,
+} from './firestore'
+import {
   createStorageMiddleware,
-  updateStorageMiddleware
+  storageListMiddleware,
+  updateStorageMiddleware,
 } from './storage'
 import {
-  initExceptionsTracker,
-  configureExceptionsScope,
-  exceptionHandlerMiddleware,
-  createCrashedApp
-} from './_lib/exceptions'
+  AgentOptions,
+  BackupFireEnvConfig,
+  BackupFireHTTPSHandler,
+  BackupFireOptions,
+  RuntimeEnvironment,
+} from './types'
+import { backupUsersMiddleware } from './users'
 import version from './version'
-import { VALID_MEMORY_OPTIONS } from 'firebase-functions'
-
-type Region = typeof functions.region extends (region: infer RegionType) => any
-  ? RegionType
-  : never
-
-type Memory = typeof VALID_MEMORY_OPTIONS[number]
+import {
+  configureExceptionsScope,
+  createCrashedApp,
+  exceptionHandlerMiddleware,
+  initExceptionsTracker,
+} from './_lib/exceptions'
 
 export const defaultControllerDomain = 'backupfire.dev'
 
 export const defaultRegion = 'us-central1'
-
-/**
- * Backup Fire agent options.
- */
-type BackupFireOptions = {
-  /**
-   * The Google Cloud region id where to deploy the Firebase function.
-   */
-  region?: Region
-
-  /**
-   * The agent function memory limit, defaults to "256MB".
-   */
-  memory?: Memory
-
-  /**
-   * The agent function timeout in seconds, defaults to 60.
-   */
-  timeout?: number
-
-  /**
-   * The controller app domain, defaults to backupfire.dev.
-   */
-  controllerDomain?: string
-
-  /**
-   * The controller access token that allows to securely communicate with
-   * the controller.
-   */
-  controllerToken: string
-
-  /**
-   * The admin password which protects the agent from unauthorized commands
-   * from the controller.
-   */
-  adminPassword: string
-
-  /**
-   * The list of buckets where the data can be backed up. It protects the agent
-   * from malformed backup commands from the controller.
-   */
-  bucketsAllowlist?: string[]
-
-  /**
-   * Make the agent print debug messages to the log.
-   */
-  debug?: boolean
-}
-
-// TODO: Split options definition to the ones coming from the environment config
-// and the user-defined agent options.
-type AgentOptions = Pick<
-  BackupFireOptions,
-  'region' | 'controllerDomain' | 'debug' | 'memory' | 'timeout'
->
-
-type BackupFireEnvConfig = {
-  domain?: string
-  token: string
-  password: string
-  allowlist?: string
-  debug?: string
-}
-
-type IncompleteRuntimeEnvironment = {
-  region: string | undefined
-  projectId: string | undefined
-  functionName: string | undefined
-}
-
-type RuntimeEnvironment = {
-  region: string
-  projectId: string
-  functionName: string
-}
 
 // Fallback for CommonJS
 module.exports = backupFire
@@ -127,14 +52,11 @@ export default function backupFire(agentOptions?: AgentOptions) {
       return dummyHandler({
         region: agentOptions?.region,
         memory: agentOptions?.memory,
-        timeout: agentOptions?.timeout
+        timeout: agentOptions?.timeout,
       })
 
     // Derive Backup Fire options from environment configuration
-
-    const envConfig = functions.config().backupfire as
-      | BackupFireEnvConfig
-      | undefined
+    const envConfig = getEnvConfig()
 
     // If options aren't set, use  dummy handler instead
     if (!envConfig) {
@@ -151,7 +73,7 @@ export default function backupFire(agentOptions?: AgentOptions) {
         adminPassword: envConfig.password,
         bucketsAllowlist:
           (envConfig.allowlist && envConfig.allowlist.split(',')) || undefined,
-        debug: envConfig.debug === 'true'
+        debug: envConfig.debug === 'true',
       },
       agentOptions
     )
@@ -182,7 +104,7 @@ export default function backupFire(agentOptions?: AgentOptions) {
     }
 
     // Set additional context
-    configureExceptionsScope(scope => {
+    configureExceptionsScope((scope) => {
       scope.setUser({ id: envConfig.token })
       scope.setTag('project_id', runtimeEnv.projectId)
       scope.setTag('node_version', process.version)
@@ -199,21 +121,16 @@ export default function backupFire(agentOptions?: AgentOptions) {
     // Send the initialization ping to the controller
     sendInitializationPing(options, runtimeEnv)
 
-    return functions
-      .runWith({
-        memory: agentOptions?.memory,
-        timeoutSeconds: agentOptions?.timeout
-      })
-      .region(options.region || defaultRegion)
-      .https.onRequest(createApp(runtimeEnv, options))
+    return httpsHandler({
+      handler: createApp(runtimeEnv, options),
+      agentOptions,
+      runtimeEnv,
+    })
   } catch (err) {
-    return functions
-      .runWith({
-        memory: agentOptions?.memory,
-        timeoutSeconds: agentOptions?.timeout
-      })
-      .region(agentOptions?.region || defaultRegion)
-      .https.onRequest(createCrashedApp(err))
+    return httpsHandler({
+      handler: createCrashedApp(err),
+      agentOptions,
+    })
   }
 }
 
@@ -229,7 +146,7 @@ export default function backupFire(agentOptions?: AgentOptions) {
 export function createApp(
   runtimeEnv: RuntimeEnvironment,
   options: BackupFireOptions
-) {
+): BackupFireHTTPSHandler {
   // Create Express app that would be mounted as a function
   const app = express()
 
@@ -249,7 +166,7 @@ export function createApp(
     '/firestore',
     backupFirestoreMiddleware({
       projectId: runtimeEnv.projectId,
-      ...globalOptions
+      ...globalOptions,
     })
   )
   // Check Firestore backup status
@@ -273,13 +190,37 @@ export function createApp(
     '/storage/:storageId',
     updateStorageMiddleware({
       adminPassword: options.adminPassword,
-      ...globalOptions
+      ...globalOptions,
     })
   )
 
   app.use(exceptionHandlerMiddleware)
 
   return app
+}
+
+interface HTTPSHandlerProps {
+  handler: BackupFireHTTPSHandler
+  agentOptions: AgentOptions | undefined
+  runtimeEnv?: RuntimeEnvironment
+}
+
+function httpsHandler({
+  handler,
+  agentOptions,
+  runtimeEnv,
+}: HTTPSHandlerProps) {
+  if (runtimeEnv?.extensionId) {
+    return functions.handler.https.onRequest(handler)
+  } else {
+    return functions
+      .runWith({
+        memory: agentOptions?.memory,
+        timeoutSeconds: agentOptions?.timeout,
+      })
+      .region(agentOptions?.region || defaultRegion)
+      .https.onRequest(handler)
+  }
 }
 
 function sendInitializationPing(
@@ -294,18 +235,21 @@ function sendInitializationPing(
     query: {
       agentVersion: version,
       nodeVersion: process.version,
-      region: options.region || defaultRegion,
+      region: runtimeEnv.region,
       token: options.controllerToken,
       projectId: runtimeEnv.projectId,
-      agentURL: agentURL(runtimeEnv)
-    }
+      runtime: runtimeEnv.region,
+      agentURL: agentURL(runtimeEnv),
+    },
   })
   return fetch(pingURL)
 }
 
 function agentURL(runtimeEnv: RuntimeEnvironment) {
-  const { region, projectId, functionName } = runtimeEnv
-  return `https://${region}-${projectId}.cloudfunctions.net/${functionName}`
+  const { region, projectId, functionName, extensionId } = runtimeEnv
+  return `https://${region}-${projectId}.cloudfunctions.net/${
+    extensionId ? `ext-${extensionId}-${functionName}` : functionName
+  }`
 }
 
 function isEmulator() {
@@ -320,19 +264,38 @@ function isDeployedToFunctions() {
 
 function getRuntimeEnv(
   options: BackupFireOptions
-): IncompleteRuntimeEnvironment | RuntimeEnvironment {
+): Partial<RuntimeEnvironment> | RuntimeEnvironment {
+  const extensionId = process.env.EXT_INSTANCE_ID
+
   return {
-    region: options.region || defaultRegion,
+    region: extensionId
+      ? process.env.LOCATION
+      : options.region || defaultRegion,
     // Node.js v8 runtime sets GCP_PROJECT, while v10 uses depricated GCLOUD_PROJECT
     projectId: process.env.GCP_PROJECT || process.env.GCLOUD_PROJECT,
     // Node.js v8 runtime uses FUNCTION_NAME, v10 — FUNCTION_TARGET
     // See: https://cloud.google.com/functions/docs/env-var#environment_variables_set_automatically
-    functionName: process.env.FUNCTION_NAME || process.env.FUNCTION_TARGET
+    functionName: process.env.FUNCTION_NAME || process.env.FUNCTION_TARGET,
+    extensionId,
   }
 }
 
+function getEnvConfig() {
+  return process.env.EXT_INSTANCE_ID
+    ? extensionEnvConfig()
+    : (functions.config().backupfire as BackupFireEnvConfig | undefined)
+}
+
+function extensionEnvConfig(): BackupFireEnvConfig | undefined {
+  const token = process.env.BACKUPFIRE_TOKEN
+  const password = process.env.BACKUPFIRE_PASSWORD
+
+  if (!token || !password) return undefined
+  else return { token, password }
+}
+
 function isCompleteRuntimeEnv(
-  runtimeEnv: IncompleteRuntimeEnvironment | RuntimeEnvironment
+  runtimeEnv: Partial<RuntimeEnvironment> | RuntimeEnvironment
 ): runtimeEnv is RuntimeEnvironment {
   return (
     !!runtimeEnv.functionName && !!runtimeEnv.projectId && !!runtimeEnv.region
@@ -345,7 +308,7 @@ function dummyHandler(
   return functions
     .runWith({
       memory: options.memory,
-      timeoutSeconds: options.timeout
+      timeoutSeconds: options.timeout,
     })
     .region(options.region || defaultRegion)
     .https.onRequest((_req, resp) => resp.end())

@@ -7,6 +7,14 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## 1.2.0 - 2021-05-20
+
+### Added
+
+- Added support for Firebase Extension runtime.
+
+- The agent now reports the GAE runtime version.
+
 ## 1.1.0 - 2021-04-01
 
 ### Changed
