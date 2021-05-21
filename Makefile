@@ -13,13 +13,19 @@ test-lib:
 	node test/lib/commonjs.js
 	${BIN}/ts-node test/lib/ts.ts
 
-# Test server
+# Test projects
 
 build-test-server:
 	@${BIN}/tsc test/server/index.ts --esModuleInterop --outDir test/server/build
 
 deploy-test-server: build-test-server
 	@cd test/server && ${BIN}/firebase deploy --only functions:backupfire
+
+build-test-extension:
+	@${BIN}/tsc test/extension/index.ts --esModuleInterop --outDir test/extension/build
+
+deploy-test-extension: build-test-extension
+	@cd test/extension && ${BIN}/firebase deploy 
 
 # Staging & production
 

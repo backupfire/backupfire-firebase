@@ -1,0 +1,15 @@
+{
+  "name": "backupfire-firebase-test-server-ext",
+  "version": "1.0.0",
+  "description": "Backup Fire test server",
+  "main": "./build/index.js",
+  "author": "Sasha Koss <koss@nocorp.me>",
+  "license": "MIT",
+  "engines": {
+    "node": "14"
+  },
+  "dependencies": {
+    "firebase-admin": "^9.6.0",
+    "firebase-functions": "^3.13.2"
+  }
+}

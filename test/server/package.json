@@ -2,11 +2,11 @@
   "name": "backupfire-firebase-test-server",
   "version": "1.0.0",
   "description": "Backup Fire test server",
-  "main": "./build/test/server/index.js",
+  "main": "./build/index.js",
   "author": "Sasha Koss <koss@nocorp.me>",
   "license": "MIT",
   "engines": {
-    "node": "10"
+    "node": "14"
   },
   "dependencies": {
     "@google-cloud/firestore": "^4.9.8",
