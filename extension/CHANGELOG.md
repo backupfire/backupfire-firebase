@@ -7,6 +7,6 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
-## v0.1.0 - 2021-05-20
+## v0.2.0 - 2021-05-20
 
 Initial version.

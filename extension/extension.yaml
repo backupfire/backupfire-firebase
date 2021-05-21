@@ -1,11 +1,14 @@
 name: backupfire-agent
-version: 0.1.0
+version: 0.2.0
 specVersion: v1beta
 
 displayName: Backup Fire Agent
 description: Backup your Firestore and Firebase Authentication data
 
-license: apache-2.0
+license: Apache-2.0
+
+sourceUrl: https://github.com/backupfire/backupfire-firebase/tree/master/extension
+releaseNotesUrl: https://github.com/backupfire/backupfire-firebase/blob/master/extension/CHANGELOG.md
 
 author:
   authorName: Sasha Koss
