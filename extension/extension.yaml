@@ -1,5 +1,5 @@
 name: backupfire-agent
-version: 0.2.0
+version: 1.0.0
 specVersion: v1beta
 
 displayName: Backup Fire Agent
@@ -66,6 +66,8 @@ params:
 roles:
   - role: datastore.importExportAdmin
     reason: Allows to export Firestore data
+  - role: datastore.viewer
+    reason: Allows to fetch the list of collections needed to perform selective backups
   - role: firebaseauth.admin
     reason: Allows to export Firebase Authentication data
   - role: storage.admin
