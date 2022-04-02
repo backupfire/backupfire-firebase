@@ -282,12 +282,6 @@ function getRuntimeEnv(
 }
 
 function getEnvConfig() {
-  return process.env.EXT_INSTANCE_ID
-    ? extensionEnvConfig()
-    : (functions.config().backupfire as BackupFireEnvConfig | undefined)
-}
-
-function extensionEnvConfig(): BackupFireEnvConfig | undefined {
   const token = process.env.BACKUPFIRE_TOKEN
   const password = process.env.BACKUPFIRE_PASSWORD
 
