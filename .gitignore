@@ -13,3 +13,6 @@ yarn-error.log
 # Test projects
 /test/*/build
 /test/*/.firebaserc
+
+# Webstorm
+/.idea
