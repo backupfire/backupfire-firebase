@@ -215,6 +215,7 @@ function httpsHandler({
   } else {
     return functions
       .runWith({
+        secrets: ['BACKUPFIRE_TOKEN', 'BACKUPFIRE_PASSWORD'],
         memory: agentOptions?.memory,
         timeoutSeconds: agentOptions?.timeout,
       })
@@ -307,6 +308,7 @@ function dummyHandler(
 ) {
   return functions
     .runWith({
+      secrets: ['BACKUPFIRE_TOKEN', 'BACKUPFIRE_PASSWORD'],
       memory: options.memory,
       timeoutSeconds: options.timeout,
     })
