@@ -1,38 +1,38 @@
 .DEFAULT_GOAL := build
-.PHONY: build
+.PHONY: build test
 
 BIN = $(shell yarn bin)
 
 test:
-	${BIN}/jest
+	npx jest
 
 test-watch:
-	${BIN}/jest --watch
+	npx jest --watch
 
 test-lib:
 	node test/lib/commonjs.js
-	${BIN}/ts-node test/lib/ts.ts
+	npx ts-node test/lib/ts.ts
 
 # Test projects
 
 build-test-server:
-	@${BIN}/tsc test/server/index.ts --esModuleInterop --outDir test/server/build
+	@npx tsc test/server/index.ts --esModuleInterop --outDir test/server/build
 
 deploy-test-server: build-test-server
-	@cd test/server && ${BIN}/firebase deploy --only functions:backupfire
+	@cd test/server && npx firebase deploy --only functions:backupfire
 
 build-test-extension:
-	@${BIN}/tsc test/extension/index.ts --esModuleInterop --outDir test/extension/build
+	@npx tsc test/extension/index.ts --esModuleInterop --outDir test/extension/build
 
 deploy-test-extension: build-test-extension
-	@cd test/extension && ${BIN}/firebase deploy 
+	@cd test/extension && npx firebase deploy
 
 # Staging & production
 
 build:
 	@rm -rf lib
-	@${BIN}/tsc
-	@${BIN}/prettier "lib/**/*.[jt]s" --write --loglevel silent
+	@npx tsc
+	@npx prettier "lib/**/*.[jt]s" --write --loglevel silent
 	@cp package.json lib
 	@cp *.md lib
 	@rsync --archive --prune-empty-dirs --exclude '*.ts' --relative src/./ lib
