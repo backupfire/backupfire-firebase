@@ -1,8 +1,6 @@
 .DEFAULT_GOAL := build
 .PHONY: build test
 
-BIN = $(shell yarn bin)
-
 test:
 	npx jest
 
