@@ -8,7 +8,6 @@ import { promisify } from 'util'
 import fs from 'fs'
 
 const unlink = promisify(fs.unlink)
-const readFile = promisify(fs.readFile)
 
 export type UsersBackupOptions = {
   bucketsAllowlist?: string[]
@@ -22,7 +21,7 @@ export type UsersBackupRequestOptions = {
 
 export function backupUsersMiddleware({
   bucketsAllowlist,
-  projectId,
+  projectId
 }: UsersBackupOptions) {
   return asyncMiddleware(async (request, response) => {
     // TODO: Validate options
@@ -45,33 +44,61 @@ async function backupUsers(
   // Export users to a temporary file
   await tools.auth.export(path, { project: projectId })
 
-  // Calculate the number of users
-  const usersCount = await readFile(path, 'utf8')
-    .then(JSON.parse)
-    .then(({ users }: { users: any[] }) => users.length)
-    // TODO: Add to log
-    .catch((_err) => undefined)
+  // Calculate users in the backup and
+  // upload the users backup to the storage
 
-  // Parsing has failed, the exported file is unreadable
-  if (usersCount === undefined) {
-    // Remove the temporary file
-    await unlink(path)
-
-    return {
-      state: 'failed',
-      data: { reason: 'Failed to parse the backup file' },
-    }
-  }
-
-  // Upload the users backup to the storage
-  const size = await bucket
-    .upload(path, { destination: options.path })
-    .then(([file]) => file.metadata.size as string)
+  const [usersCount, size] = await Promise.all([
+    calculateUsers(path),
+    bucket
+      .upload(path, { destination: options.path })
+      .then(([file]) => file.metadata.size as string)
+  ])
 
   // Remove the temporary file
   await unlink(path)
 
   return { state: 'completed', data: { usersCount, size } }
+}
+
+/**
+ * Calculates the number of users in the backup.
+ * @param path - the backup path
+ * @returns the number of users in the backup
+ */
+export async function calculateUsers(path: string) {
+  const usersStream = fs.createReadStream(path, {
+    encoding: 'utf8',
+    highWaterMark: 10000000 // 10MB
+  })
+
+  return calculateUsersInSteam(usersStream)
+}
+
+/**
+ * Calculates the number of users in the file stream.
+ * @param usersStream - the backup file stream
+ * @returns the number of users in the stream
+ */
+export async function calculateUsersInSteam(usersStream: fs.ReadStream) {
+  let usersCount = 0
+  let lookingForEnding: string | null = null
+
+  for await (const data of usersStream) {
+    const text: string = data.toString()
+
+    if (lookingForEnding) {
+      if (text.slice(0, lookingForEnding.length) === lookingForEnding)
+        usersCount++
+      lookingForEnding = null
+    }
+
+    usersCount += text.match(/"localId"/g)?.length || 0
+
+    const ending = text.match(/"(l(o(c(a(l(I(d(")?)?)?)?)?)?)?)?$/)
+    if (ending) lookingForEnding = '"localId"'.slice(ending[0].length)
+  }
+
+  return usersCount
 }
 
 /**
