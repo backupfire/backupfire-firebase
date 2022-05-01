@@ -14,10 +14,6 @@ export function storageListMiddleware({ bucketsAllowlist }: StorageOptions) {
   })
 }
 
-export type CreateStorageOptions = {
-  bucketsAllowlist?: string[]
-}
-
 export function createStorageMiddleware({ bucketsAllowlist }: StorageOptions) {
   return asyncMiddleware(async (request, response) => {
     // TODO: Validate options
@@ -79,6 +75,49 @@ export function updateStorageMiddleware({
     const [bucketData] = await bucket.get()
 
     response.send(bucketAsStorage(bucketData))
+  })
+}
+
+export interface ListFilesOptions {
+  bucketsAllowlist?: string[]
+}
+
+export interface ListFilesRequestQuery {
+  path: string
+  maxResults: string | undefined
+  startOffset: string | undefined
+  endOffset: string | undefined
+  prefix: string | undefined
+}
+
+export function listFilesMiddleware({ bucketsAllowlist }: ListFilesOptions) {
+  const storage = new CloudStorage()
+
+  return asyncMiddleware(async (request, response) => {
+    const storageId = request.params.storageId as string
+    const query = request.body as ListFilesRequestQuery
+
+    const bucket = storage.bucket(storageId)
+    const [files] = await bucket.getFiles({
+      prefix: query.path,
+      maxResults: query.maxResults ? parseInt(query.maxResults) : undefined,
+      startOffset: query.startOffset,
+      endOffset: query.endOffset,
+      autoPaginate: !query.endOffset && !query.startOffset
+    })
+
+    const result = files.map(file => ({
+      name: file.name,
+      createdAt: file.metadata.timeCreated,
+      updatedAt: file.metadata.updated,
+      size: parseInt(file.metadata.size),
+      contentType: file.metadata.contentType, // 'application/octet-stream'
+      storageClass: file.metadata.storageClass, // 'STANDARD'
+      storageClassUpdatedAt: new Date(file.metadata.timeStorageClassUpdated),
+      etag: file.metadata.etag
+    }))
+
+    response.send(result)
   })
 }
 

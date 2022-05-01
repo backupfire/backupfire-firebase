@@ -1,26 +1,27 @@
 import bodyParser from 'body-parser'
 import cors from 'cors'
 import express from 'express'
-import jwt from 'express-jwt'
+import { expressjwt as jwt } from 'express-jwt'
 import * as functions from 'firebase-functions'
 import fetch from 'node-fetch'
 import { format } from 'url'
 import {
   backupFirestoreMiddleware,
   checkFirestoreBackupStatusMiddleware,
-  getCollectionsMiddleware,
+  getCollectionsMiddleware
 } from './firestore'
 import {
+  listFilesMiddleware,
   createStorageMiddleware,
   storageListMiddleware,
-  updateStorageMiddleware,
+  updateStorageMiddleware
 } from './storage'
 import {
   AgentOptions,
   BackupFireEnvConfig,
   BackupFireHTTPSHandler,
   BackupFireOptions,
-  RuntimeEnvironment,
+  RuntimeEnvironment
 } from './types'
 import { backupUsersMiddleware } from './users'
 import version from './version'
@@ -28,7 +29,7 @@ import {
   configureExceptionsScope,
   createCrashedApp,
   exceptionHandlerMiddleware,
-  initExceptionsTracker,
+  initExceptionsTracker
 } from './_lib/exceptions'
 
 export const defaultControllerDomain = 'backupfire.dev'
@@ -52,7 +53,7 @@ export default function backupFire(agentOptions?: AgentOptions) {
       return dummyHandler({
         region: agentOptions?.region,
         memory: agentOptions?.memory,
-        timeout: agentOptions?.timeout,
+        timeout: agentOptions?.timeout
       })
 
     // Derive Backup Fire options from environment configuration
@@ -73,7 +74,7 @@ export default function backupFire(agentOptions?: AgentOptions) {
         adminPassword: envConfig.password,
         bucketsAllowlist:
           (envConfig.allowlist && envConfig.allowlist.split(',')) || undefined,
-        debug: envConfig.debug === 'true',
+        debug: envConfig.debug === 'true'
       },
       agentOptions
     )
@@ -104,7 +105,7 @@ export default function backupFire(agentOptions?: AgentOptions) {
     }
 
     // Set additional context
-    configureExceptionsScope((scope) => {
+    configureExceptionsScope(scope => {
       scope.setUser({ id: envConfig.token })
       scope.setTag('project_id', runtimeEnv.projectId)
       scope.setTag('node_version', process.version)
@@ -124,12 +125,12 @@ export default function backupFire(agentOptions?: AgentOptions) {
     return httpsHandler({
       handler: createApp(runtimeEnv, options),
       agentOptions,
-      runtimeEnv,
+      runtimeEnv
     })
   } catch (err) {
     return httpsHandler({
       handler: createCrashedApp(err),
-      agentOptions,
+      agentOptions
     })
   }
 }
@@ -166,7 +167,7 @@ export function createApp(
     '/firestore',
     backupFirestoreMiddleware({
       projectId: runtimeEnv.projectId,
-      ...globalOptions,
+      ...globalOptions
     })
   )
   // Check Firestore backup status
@@ -190,9 +191,11 @@ export function createApp(
     '/storage/:storageId',
     updateStorageMiddleware({
       adminPassword: options.adminPassword,
-      ...globalOptions,
+      ...globalOptions
     })
   )
+  // List files in the storage
+  app.get('/storage/:storageId/files', listFilesMiddleware(globalOptions))
 
   app.use(exceptionHandlerMiddleware)
 
@@ -208,16 +211,18 @@ interface HTTPSHandlerProps {
 function httpsHandler({
   handler,
   agentOptions,
-  runtimeEnv,
+  runtimeEnv
 }: HTTPSHandlerProps) {
   if (runtimeEnv?.extensionId) {
     return functions.handler.https.onRequest(handler)
   } else {
+    const runtimeOptions: functions.RuntimeOptions = {}
+    if (agentOptions?.memory) runtimeOptions.memory = agentOptions.memory
+    if (agentOptions?.timeout)
+      runtimeOptions.timeoutSeconds = agentOptions.timeout
+
     return functions
-      .runWith({
-        memory: agentOptions?.memory,
-        timeoutSeconds: agentOptions?.timeout,
-      })
+      .runWith(runtimeOptions)
       .region(agentOptions?.region || defaultRegion)
       .https.onRequest(handler)
   }
@@ -239,8 +244,8 @@ function sendInitializationPing(
       token: options.controllerToken,
       projectId: runtimeEnv.projectId,
       runtime: runtimeEnv.region,
-      agentURL: agentURL(runtimeEnv),
-    },
+      agentURL: agentURL(runtimeEnv)
+    }
   })
   return fetch(pingURL)
 }
@@ -276,7 +281,7 @@ function getRuntimeEnv(
     // Node.js v8 runtime uses FUNCTION_NAME, v10 — FUNCTION_TARGET
     // See: https://cloud.google.com/functions/docs/env-var#environment_variables_set_automatically
     functionName: process.env.FUNCTION_NAME || process.env.FUNCTION_TARGET,
-    extensionId,
+    extensionId
   }
 }
 
@@ -305,13 +310,16 @@ function isCompleteRuntimeEnv(
 function dummyHandler(
   options: Pick<BackupFireOptions, 'region' | 'memory' | 'timeout'>
 ) {
+  const runtimeOptions: functions.RuntimeOptions = {}
+  if (options?.memory) runtimeOptions.memory = options.memory
+  if (options?.timeout) runtimeOptions.timeoutSeconds = options.timeout
+
   return functions
-    .runWith({
-      memory: options.memory,
-      timeoutSeconds: options.timeout,
-    })
+    .runWith(runtimeOptions)
     .region(options.region || defaultRegion)
-    .https.onRequest((_req, resp) => resp.end())
+    .https.onRequest((_req, resp) => {
+      resp.end()
+    })
 }
 
 function prettyJSON(obj: any) {

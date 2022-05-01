@@ -13,11 +13,8 @@ test-lib:
 
 # Test projects
 
-build-test-server:
-	@npx tsc test/server/index.ts --esModuleInterop --outDir test/server/build
-
-deploy-test-server: build-test-server
-	@cd test/server && npx firebase deploy --only functions:backupfire
+deploy-test-server:
+	@cd test/server && npx firebase deploy
 
 build-test-extension:
 	@npx tsc test/extension/index.ts --esModuleInterop --outDir test/extension/build
