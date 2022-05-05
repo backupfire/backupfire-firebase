@@ -1,7 +1,7 @@
 import asyncMiddleware from '../_lib/asyncMiddleware'
 import { Storage as CloudStorage, Bucket } from '@google-cloud/storage'
 
-export type StorageOptions = {
+export interface StorageOptions {
   bucketsAllowlist?: string[]
 }
 
@@ -14,23 +14,7 @@ export function storageListMiddleware({ bucketsAllowlist }: StorageOptions) {
   })
 }
 
-export function createStorageMiddleware({ bucketsAllowlist }: StorageOptions) {
-  return asyncMiddleware(async (request, response) => {
-    // TODO: Validate options
-
-    // await backupUsers(options)
-
-    response.send([])
-  })
-}
-
-export type UpdateStorageOptions = {
-  bucketsAllowlist?: string[]
-  adminPassword: string
-}
-
-type UpdateStorageRequestBody = {
-  password: string
+interface StorageRetentionData {
   removeOldBackups: boolean
   keepBackupsValue: number
   keepBackupsUnit: KeepBackupsUnit
@@ -38,10 +22,64 @@ type UpdateStorageRequestBody = {
 
 type KeepBackupsUnit = 'years' | 'months' | 'days'
 
+export interface CreateStorageRequestBody
+  extends Partial<StorageRetentionData> {
+  storageId: string
+  location: string
+  storageClass?: 'standard' | 'nearline' | 'coldline' | 'archive'
+}
+
+export function createStorageMiddleware({ bucketsAllowlist }: StorageOptions) {
+  const storage = new CloudStorage()
+
+  return asyncMiddleware(async (request, response) => {
+    const body = request.body as CreateStorageRequestBody
+
+    const [bucket] = await storage.createBucket(body.storageId, {
+      [body.storageClass || 'nearline']: true,
+      location: body.location
+    })
+
+    if (
+      body.removeOldBackups &&
+      body.keepBackupsValue &&
+      body.keepBackupsUnit
+    ) {
+      const deleteAge = keepBackupInDays(
+        body.keepBackupsValue,
+        body.keepBackupsUnit
+      )
+
+      if (body.removeOldBackups) {
+        await bucket.addLifecycleRule(
+          {
+            action: { type: 'Delete' },
+            condition: { age: deleteAge }
+          },
+          { append: false }
+        )
+      } else {
+        await bucket.setMetadata({ lifecycle: null })
+      }
+    }
+
+    const [bucketData] = await bucket.get()
+    response.send(bucketAsStorage(bucketData))
+  })
+}
+
+export interface PasswordedStorageOptions extends StorageOptions {
+  adminPassword: string
+}
+
+interface UpdateStorageRequestBody extends StorageRetentionData {
+  password: string
+}
+
 export function updateStorageMiddleware({
   bucketsAllowlist,
   adminPassword
-}: UpdateStorageOptions) {
+}: PasswordedStorageOptions) {
   return asyncMiddleware(async (request, response) => {
     // TODO: Validate options
     const storageId = request.params.storageId as string
@@ -73,13 +111,8 @@ export function updateStorageMiddleware({
     }
 
     const [bucketData] = await bucket.get()
-
     response.send(bucketAsStorage(bucketData))
   })
-}
-
-export interface ListFilesOptions {
-  bucketsAllowlist?: string[]
 }
 
 export interface ListFilesRequestQuery {
@@ -90,12 +123,12 @@ export interface ListFilesRequestQuery {
   prefix: string | undefined
 }
 
-export function listFilesMiddleware({ bucketsAllowlist }: ListFilesOptions) {
+export function listFilesMiddleware({ bucketsAllowlist }: StorageOptions) {
   const storage = new CloudStorage()
 
   return asyncMiddleware(async (request, response) => {
     const storageId = request.params.storageId as string
-    const query = request.body as ListFilesRequestQuery
+    const query = (request.query as unknown) as ListFilesRequestQuery
 
     const bucket = storage.bucket(storageId)
     const [files] = await bucket.getFiles({
@@ -163,7 +196,7 @@ export function keepBackupInDays(value: number, unit: KeepBackupsUnit) {
   }
 }
 
-export type Storage = {
+export interface Storage {
   name: string
   id: string
   location: StorageLocation
@@ -175,7 +208,7 @@ export type Storage = {
   lifecycle: LifecycleRule[]
 }
 
-type LifecycleRule = {
+interface LifecycleRule {
   action: { type: string; storageClass?: string } | string
   condition: { [key: string]: boolean | Date | number | string }
   storageClass?: string

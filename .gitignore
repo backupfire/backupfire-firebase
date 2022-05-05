@@ -1,6 +1,5 @@
 # Node.js
 node_modules
-yarn-error.log
 
 /lib
 /secrets
@@ -13,3 +12,6 @@ yarn-error.log
 # Test projects
 /test/*/build
 /test/*/.firebaserc
+
+# Firebase
+firebase-debug.log
