@@ -7,19 +7,21 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
-## 1.3.0 - 2022-05-??
+## 1.3.0 - 2022-06-01
 
 ### Fixed
 
-- Fixed compatibility with `firebase-functions` tripping over`timeoutSeconds`set to undefined and throwing`Field 'timeout', Invalid duration format, failed to parse seconds"`.
+- Fixed compatibility with `firebase-functions` tripping over `timeoutSeconds` set to `undefined` and throwing `Field 'timeout', Invalid duration format, failed to parse seconds"`.
 
 ### Changed
 
-- Dramatically the memory footprint of the user backup making `memory` usage unnecessary.
+- Dramatically decrease the memory footprint of the user backup, making `memory` usage unnecessary.
+
+- Updated dependencies to the latest supported versions.
 
 ### Added
 
-- Added list files endpoint to the agent API that will help with Realtime Database backup integration and checking for the status of the backups (storage class, size, etc.)
+- Added list files endpoint to the agent API that will help with Realtime Database backup integration and check for the backups' status (storage class, size, etc.)
 
 - Added create storage endpoint to simplify the integration process and automatically create the backups bucket with optimal defaults.
 
