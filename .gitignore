@@ -13,6 +13,7 @@ node_modules
 /test/*/build
 /test/*/.firebaserc
 /test/*/.env
+/test/*/secrets
 
 # Firebase
 firebase-debug.log
