@@ -12,6 +12,7 @@ node_modules
 # Test projects
 /test/*/build
 /test/*/.firebaserc
+/test/*/.env
 
 # Firebase
 firebase-debug.log

@@ -36,6 +36,13 @@ export const defaultControllerDomain = 'backupfire.dev'
 
 export const defaultRegion = 'us-central1'
 
+export enum BackupFireConfig {
+  Token = 'BACKUPFIRE_TOKEN',
+  Password = 'BACKUPFIRE_PASSWORD',
+  Domain = 'BACKUPFIRE_DOMAIN',
+  Allowlist = 'BACKUPFIRE_ALLOWLIST'
+}
+
 // Fallback for CommonJS
 module.exports = backupFire
 
@@ -62,7 +69,7 @@ export default function backupFire(agentOptions?: AgentOptions) {
     // If options aren't set, use  dummy handler instead
     if (!envConfig) {
       console.warn(
-        `Warning: "backupfire" key isn't found in the Functions environment configuration. Running a dummy HTTP handler instead of the Backup Fire agent...`
+        `Warning: the Backup Fire configuration is missing, either set BACKUPFIRE_TOKEN and BACKUPFIRE_PASSWORD or set backupfire.token and backupfire.password as env config values. Running a dummy HTTP handler instead of the Backup Fire agent...`
       )
       return dummyHandler({ region: agentOptions?.region })
     }
@@ -72,8 +79,7 @@ export default function backupFire(agentOptions?: AgentOptions) {
         controllerDomain: envConfig.domain,
         controllerToken: envConfig.token,
         adminPassword: envConfig.password,
-        bucketsAllowlist:
-          (envConfig.allowlist && envConfig.allowlist.split(',')) || undefined,
+        bucketsAllowlist: envConfig.allowlist?.split(','),
         debug: envConfig.debug === 'true'
       },
       agentOptions
@@ -216,7 +222,10 @@ function httpsHandler({
   if (runtimeEnv?.extensionId) {
     return functions.handler.https.onRequest(handler)
   } else {
-    const runtimeOptions: functions.RuntimeOptions = {}
+    const runtimeOptions: functions.RuntimeOptions = {
+      secrets: Object.values(BackupFireConfig)
+    }
+
     if (agentOptions?.memory) runtimeOptions.memory = agentOptions.memory
     if (agentOptions?.timeout)
       runtimeOptions.timeoutSeconds = agentOptions.timeout
@@ -285,18 +294,20 @@ function getRuntimeEnv(
   }
 }
 
-function getEnvConfig() {
-  return process.env.EXT_INSTANCE_ID
-    ? extensionEnvConfig()
-    : (functions.config().backupfire as BackupFireEnvConfig | undefined)
-}
+function getEnvConfig(): BackupFireEnvConfig | undefined {
+  const token = process.env[BackupFireConfig.Token]
+  const password = process.env[BackupFireConfig.Password]
+  const domain = process.env[BackupFireConfig.Domain]
+  const allowlist = process.env[BackupFireConfig.Allowlist]
 
-function extensionEnvConfig(): BackupFireEnvConfig | undefined {
-  const token = process.env.BACKUPFIRE_TOKEN
-  const password = process.env.BACKUPFIRE_PASSWORD
+  const envConfig = functions.config().backupfire as
+    | BackupFireEnvConfig
+    | undefined
 
-  if (!token || !password) return undefined
-  else return { token, password }
+  // First, check if the env contains the token & password
+  if (token && password) return { token, password, domain, allowlist }
+  // Otherwise, return the env config value
+  else envConfig
 }
 
 function isCompleteRuntimeEnv(

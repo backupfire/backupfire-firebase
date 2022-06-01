@@ -23,6 +23,8 @@ This change log follows the format documented in [Keep a CHANGELOG].
 
 - Added create storage endpoint to simplify the integration process and automatically create the backups bucket with optimal defaults.
 
+- Added support for managing Backup Fire config with `.env` by setting `BACKUPFIRE_TOKEN` and `BACKUPFIRE_PASSWORD`.
+
 ## 1.2.0 - 2021-05-20
 
 ### Added
