@@ -7,6 +7,20 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## 1.4.0 - 2022-06-03
+
+### Changed
+
+- Set default `memory` (`1GB`) and `timeoutSeconds` (`540`) Firebase Functions runtime options. It solves the problem with the huge users' backups that either run out of memory or timeout.
+
+- Even further improved the memory usage by the users backup.
+
+- Updated dependencies to the latest supported versions.
+
+### Added
+
+- Added delayed users backup feature. If the delay is requested, the agent will respond with a pending backup state. When the backup is completed, the agent will notify the controller. That prevents multiple backups caused by timeouts.
+
 ## 1.3.0 - 2022-06-01
 
 ### Fixed

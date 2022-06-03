@@ -8,20 +8,26 @@ import { format } from 'url'
 import {
   backupFirestoreMiddleware,
   checkFirestoreBackupStatusMiddleware,
-  getCollectionsMiddleware
+  getCollectionsMiddleware,
 } from './firestore'
 import {
-  listFilesMiddleware,
+  defaultControllerDomain,
+  defaultMemory,
+  defaultRegion,
+  defaultTimeout,
+} from './options'
+import {
   createStorageMiddleware,
+  listFilesMiddleware,
   storageListMiddleware,
-  updateStorageMiddleware
+  updateStorageMiddleware,
 } from './storage'
 import {
   AgentOptions,
   BackupFireEnvConfig,
   BackupFireHTTPSHandler,
   BackupFireOptions,
-  RuntimeEnvironment
+  RuntimeEnvironment,
 } from './types'
 import { backupUsersMiddleware } from './users'
 import version from './version'
@@ -29,18 +35,14 @@ import {
   configureExceptionsScope,
   createCrashedApp,
   exceptionHandlerMiddleware,
-  initExceptionsTracker
+  initExceptionsTracker,
 } from './_lib/exceptions'
-
-export const defaultControllerDomain = 'backupfire.dev'
-
-export const defaultRegion = 'us-central1'
 
 export enum BackupFireConfig {
   Token = 'BACKUPFIRE_TOKEN',
   Password = 'BACKUPFIRE_PASSWORD',
   Domain = 'BACKUPFIRE_DOMAIN',
-  Allowlist = 'BACKUPFIRE_ALLOWLIST'
+  Allowlist = 'BACKUPFIRE_ALLOWLIST',
 }
 
 // Fallback for CommonJS
@@ -60,7 +62,7 @@ export default function backupFire(agentOptions?: AgentOptions) {
       return dummyHandler({
         region: agentOptions?.region,
         memory: agentOptions?.memory,
-        timeout: agentOptions?.timeout
+        timeout: agentOptions?.timeout,
       })
 
     // Derive Backup Fire options from environment configuration
@@ -80,7 +82,7 @@ export default function backupFire(agentOptions?: AgentOptions) {
         controllerToken: envConfig.token,
         adminPassword: envConfig.password,
         bucketsAllowlist: envConfig.allowlist?.split(','),
-        debug: envConfig.debug === 'true'
+        debug: envConfig.debug === 'true',
       },
       agentOptions
     )
@@ -111,7 +113,7 @@ export default function backupFire(agentOptions?: AgentOptions) {
     }
 
     // Set additional context
-    configureExceptionsScope(scope => {
+    configureExceptionsScope((scope) => {
       scope.setUser({ id: envConfig.token })
       scope.setTag('project_id', runtimeEnv.projectId)
       scope.setTag('node_version', process.version)
@@ -131,12 +133,12 @@ export default function backupFire(agentOptions?: AgentOptions) {
     return httpsHandler({
       handler: createApp(runtimeEnv, options),
       agentOptions,
-      runtimeEnv
+      runtimeEnv,
     })
   } catch (err) {
     return httpsHandler({
       handler: createCrashedApp(err),
-      agentOptions
+      agentOptions,
     })
   }
 }
@@ -173,7 +175,7 @@ export function createApp(
     '/firestore',
     backupFirestoreMiddleware({
       projectId: runtimeEnv.projectId,
-      ...globalOptions
+      ...globalOptions,
     })
   )
   // Check Firestore backup status
@@ -185,7 +187,13 @@ export function createApp(
   // Backup Firebase users
   app.post(
     '/users',
-    backupUsersMiddleware({ projectId: runtimeEnv.projectId, ...globalOptions })
+    backupUsersMiddleware({
+      projectId: runtimeEnv.projectId,
+      controllerToken: options.controllerToken,
+      controllerDomain: options.controllerDomain,
+      agentURL: agentURL(runtimeEnv),
+      ...globalOptions,
+    })
   )
 
   // List storage
@@ -197,7 +205,7 @@ export function createApp(
     '/storage/:storageId',
     updateStorageMiddleware({
       adminPassword: options.adminPassword,
-      ...globalOptions
+      ...globalOptions,
     })
   )
   // List files in the storage
@@ -217,21 +225,16 @@ interface HTTPSHandlerProps {
 function httpsHandler({
   handler,
   agentOptions,
-  runtimeEnv
+  runtimeEnv,
 }: HTTPSHandlerProps) {
   if (runtimeEnv?.extensionId) {
     return functions.handler.https.onRequest(handler)
   } else {
-    const runtimeOptions: functions.RuntimeOptions = {
-      secrets: Object.values(BackupFireConfig)
-    }
-
-    if (agentOptions?.memory) runtimeOptions.memory = agentOptions.memory
-    if (agentOptions?.timeout)
-      runtimeOptions.timeoutSeconds = agentOptions.timeout
-
     return functions
-      .runWith(runtimeOptions)
+      .runWith({
+        ...getRuntimeOptions(agentOptions),
+        secrets: Object.values(BackupFireConfig),
+      })
       .region(agentOptions?.region || defaultRegion)
       .https.onRequest(handler)
   }
@@ -253,8 +256,8 @@ function sendInitializationPing(
       token: options.controllerToken,
       projectId: runtimeEnv.projectId,
       runtime: runtimeEnv.region,
-      agentURL: agentURL(runtimeEnv)
-    }
+      agentURL: agentURL(runtimeEnv),
+    },
   })
   return fetch(pingURL)
 }
@@ -290,7 +293,7 @@ function getRuntimeEnv(
     // Node.js v8 runtime uses FUNCTION_NAME, v10 — FUNCTION_TARGET
     // See: https://cloud.google.com/functions/docs/env-var#environment_variables_set_automatically
     functionName: process.env.FUNCTION_NAME || process.env.FUNCTION_TARGET,
-    extensionId
+    extensionId,
   }
 }
 
@@ -326,7 +329,7 @@ function dummyHandler(
   if (options?.timeout) runtimeOptions.timeoutSeconds = options.timeout
 
   return functions
-    .runWith(runtimeOptions)
+    .runWith(getRuntimeOptions(options))
     .region(options.region || defaultRegion)
     .https.onRequest((_req, resp) => {
       resp.end()
@@ -335,4 +338,25 @@ function dummyHandler(
 
 function prettyJSON(obj: any) {
   return JSON.stringify(obj, null, 2)
+}
+
+/**
+ *
+ * @param agentOptions - TODO
+ * @returns
+ */
+function getRuntimeOptions(
+  agentOptions: AgentOptions | undefined
+): functions.RuntimeOptions {
+  const options: functions.RuntimeOptions = {
+    // Always assign timeout to runtime options. Unless the user defines
+    // a custom timeout, we want to use the default timeout of 9 minutes,
+    // to make sure the user backups are completed regardless of how many
+    // there are.
+    timeoutSeconds: agentOptions?.timeout || defaultTimeout,
+  }
+
+  if (agentOptions?.memory) options.memory = agentOptions.memory
+
+  return options
 }

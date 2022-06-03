@@ -16,7 +16,10 @@ export type FirestoreStatusResponse =
 
 export type UsersStatusResponse =
   | {
-      state: 'completed' | 'pending'
+      state: 'pending'
+    }
+  | {
+      state: 'completed'
       data: {
         usersCount: number | undefined
         size: string
