@@ -42,4 +42,4 @@ build-extension:
 	@cd extension/functions && npm run build
 
 publish-extension: build-extension
-	@cd extension && firebase ext:dev:publish backupfire/backupfire-agent
+	@cd extension && npx firebase ext:dev:publish backupfire/backupfire-agent
