@@ -7,6 +7,12 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## 1.5.0 - 2023-02-28
+
+### Added
+
+- Added logging to the agent endpoints to help with debugging and troubleshooting.
+
 ## 1.4.0 - 2022-06-03
 
 ### Changed
