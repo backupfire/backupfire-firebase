@@ -60,7 +60,7 @@
     "express-jwt": "^7.7.5",
     "firebase-tools": "^11.0.1",
     "googleapis": "^100.0.0",
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.0",
     "node-fetch": "^2.6.7"
   },
   "peerDependencies": {
