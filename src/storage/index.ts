@@ -1,5 +1,6 @@
 import asyncMiddleware from '../_lib/asyncMiddleware'
 import { Storage as CloudStorage, Bucket } from '@google-cloud/storage'
+import * as functions from 'firebase-functions'
 
 export interface StorageOptions {
   bucketsAllowlist?: string[]
@@ -7,9 +8,14 @@ export interface StorageOptions {
 
 export function storageListMiddleware({ bucketsAllowlist }: StorageOptions) {
   return asyncMiddleware(async (request, response) => {
+    functions.logger.info('Requested the storage list', { bucketsAllowlist })
+
     const storage = new CloudStorage()
     const [buckets] = await storage.getBuckets()
     const storageList: Storage[] = buckets.map(bucketAsStorage)
+
+    functions.logger.info('Responding with the storage list', { storageList })
+
     response.send(storageList)
   })
 }
@@ -30,15 +36,26 @@ export interface CreateStorageRequestBody
 }
 
 export function createStorageMiddleware({ bucketsAllowlist }: StorageOptions) {
-  const storage = new CloudStorage()
-
   return asyncMiddleware(async (request, response) => {
     const body = request.body as CreateStorageRequestBody
 
-    const [bucket] = await storage.createBucket(body.storageId, {
-      [body.storageClass || 'nearline']: true,
-      location: body.location
+    functions.logger.info('Requested a bucket creation', {
+      // NOTE: Do not ...body here to avoid logging sensitive data
+      storageId: body.storageId,
+      location: body.location,
+      storageClass: body.storageClass,
+      removeOldBackups: body.removeOldBackups,
+      keepBackupsValue: body.keepBackupsValue,
+      keepBackupsUnit: body.keepBackupsUnit,
+      bucketsAllowlist,
     })
+
+    const [bucket] = await new CloudStorage().createBucket(body.storageId, {
+      [body.storageClass || 'nearline']: true,
+      location: body.location,
+    })
+
+    functions.logger.info('Bucket created', { bucket: bucket.name })
 
     if (
       body.removeOldBackups &&
@@ -51,20 +68,28 @@ export function createStorageMiddleware({ bucketsAllowlist }: StorageOptions) {
       )
 
       if (body.removeOldBackups) {
+        functions.logger.info('Setting the bucket lifecycle', { deleteAge })
+
         await bucket.addLifecycleRule(
           {
             action: { type: 'Delete' },
-            condition: { age: deleteAge }
+            condition: { age: deleteAge },
           },
           { append: false }
         )
       } else {
+        functions.logger.info('Clearing the bucket lifecycle')
+
         await bucket.setMetadata({ lifecycle: null })
       }
     }
 
     const [bucketData] = await bucket.get()
-    response.send(bucketAsStorage(bucketData))
+    const storage = bucketAsStorage(bucketData)
+
+    functions.logger.info('Responding with the storage object', { storage })
+
+    response.send(storage)
   })
 }
 
@@ -78,40 +103,58 @@ interface UpdateStorageRequestBody extends StorageRetentionData {
 
 export function updateStorageMiddleware({
   bucketsAllowlist,
-  adminPassword
+  adminPassword,
 }: PasswordedStorageOptions) {
   return asyncMiddleware(async (request, response) => {
-    // TODO: Validate options
+    // TODO: Validate the payload
     const storageId = request.params.storageId as string
-
     const body = request.body as UpdateStorageRequestBody
 
+    functions.logger.info('Requested a bucket update', {
+      // NOTE: Do not ...body here to avoid logging sensitive data
+      removeOldBackups: body.removeOldBackups,
+      keepBackupsValue: body.keepBackupsValue,
+      keepBackupsUnit: body.keepBackupsUnit,
+      bucketsAllowlist,
+    })
+
     if (body.password !== adminPassword) {
+      functions.logger.info(
+        'Admin password is incorrect, responding with an error'
+      )
+
       response.status(403).send({ friendlyMessage: 'Wrong admin password' })
       return
     }
 
-    const storage = new CloudStorage()
-    const bucket = storage.bucket(storageId)
+    const bucket = new CloudStorage().bucket(storageId)
     const deleteAge = keepBackupInDays(
       body.keepBackupsValue,
       body.keepBackupsUnit
     )
 
     if (body.removeOldBackups) {
+      functions.logger.info('Setting the bucket lifecycle', { deleteAge })
+
       await bucket.addLifecycleRule(
         {
           action: { type: 'Delete' },
-          condition: { age: deleteAge }
+          condition: { age: deleteAge },
         },
         { append: false }
       )
     } else {
+      functions.logger.info('Clearing the bucket lifecycle')
+
       await bucket.setMetadata({ lifecycle: null })
     }
 
     const [bucketData] = await bucket.get()
-    response.send(bucketAsStorage(bucketData))
+    const storage = bucketAsStorage(bucketData)
+
+    functions.logger.info('Responding with the storage object', { storage })
+
+    response.send(storage)
   })
 }
 
@@ -124,22 +167,31 @@ export interface ListFilesRequestQuery {
 }
 
 export function listFilesMiddleware({ bucketsAllowlist }: StorageOptions) {
-  const storage = new CloudStorage()
-
   return asyncMiddleware(async (request, response) => {
     const storageId = request.params.storageId as string
-    const query = (request.query as unknown) as ListFilesRequestQuery
+    const query = request.query as unknown as ListFilesRequestQuery
 
-    const bucket = storage.bucket(storageId)
+    functions.logger.info('Requested bucket files list', {
+      // NOTE: Do not ...query here to avoid logging sensitive data
+      storageId,
+      path: query.path,
+      maxResults: query.maxResults,
+      startOffset: query.startOffset,
+      endOffset: query.endOffset,
+      prefix: query.prefix,
+      bucketsAllowlist,
+    })
+
+    const bucket = new CloudStorage().bucket(storageId)
     const [files] = await bucket.getFiles({
       prefix: query.path,
       maxResults: query.maxResults ? parseInt(query.maxResults) : undefined,
       startOffset: query.startOffset,
       endOffset: query.endOffset,
-      autoPaginate: !query.endOffset && !query.startOffset
+      autoPaginate: !query.endOffset && !query.startOffset,
     })
 
-    const result = files.map(file => ({
+    const result = files.map((file) => ({
       name: file.name,
       createdAt: file.metadata.timeCreated,
       updatedAt: file.metadata.updated,
@@ -147,7 +199,7 @@ export function listFilesMiddleware({ bucketsAllowlist }: StorageOptions) {
       contentType: file.metadata.contentType, // 'application/octet-stream'
       storageClass: file.metadata.storageClass, // 'STANDARD'
       storageClassUpdatedAt: new Date(file.metadata.timeStorageClassUpdated),
-      etag: file.metadata.etag
+      etag: file.metadata.etag,
     }))
 
     response.send(result)
@@ -165,8 +217,8 @@ function bucketAsStorage(bucket: Bucket): Storage {
       projectNumber,
       timeCreated,
       updated,
-      lifecycle
-    }
+      lifecycle,
+    },
   } = bucket
 
   return {
@@ -178,7 +230,7 @@ function bucketAsStorage(bucket: Bucket): Storage {
     locationType,
     createdAt: new Date(timeCreated),
     updatedAt: new Date(updated),
-    lifecycle: lifecycle && lifecycle.rule
+    lifecycle: lifecycle && lifecycle.rule,
   }
 }
 

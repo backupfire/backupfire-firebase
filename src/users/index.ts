@@ -9,6 +9,7 @@ import { promisify } from 'util'
 import { defaultControllerDomain } from '../options'
 import asyncMiddleware from '../_lib/asyncMiddleware'
 import operationResponse, { UsersStatusResponse } from '../_lib/operation'
+import * as functions from 'firebase-functions'
 
 const unlink = promisify(fs.unlink)
 
@@ -40,7 +41,19 @@ export function backupUsersMiddleware({
     // TODO: Validate options
     const body = request.body as UsersBackupRequestBody
 
+    functions.logger.info('Requested users backup', {
+      // NOTE: Do not ...body here to avoid logging sensitive data
+      storageId: body.storageId,
+      path: body.path,
+      backupId: body.delay?.backupId,
+      state: body.delay?.state,
+      bucketsAllowlist,
+      projectId,
+    })
+
     if (body.delay?.state === 'delay') {
+      functions.logger.info('Delaying users backup')
+
       // NOTE: Trigger backup, but do not wait for the result
       fetch(agentURL + request.path, {
         method: 'POST',
@@ -59,9 +72,28 @@ export function backupUsersMiddleware({
         }),
       })
 
+      functions.logger.info('Responding with pending status')
+
       operationResponse(response, { state: 'pending' })
     } else {
+      functions.logger.info('Initiating users backup')
+
       const backupResponse = await backupUsers(projectId, body)
+
+      functions.logger.info('Got the users backup response', {
+        // NOTE: Do not ...body here to avoid logging sensitive data
+        state: backupResponse.state,
+        ...(backupResponse.state === 'pending'
+          ? {}
+          : backupResponse.state === 'completed'
+          ? {
+              usersCount: backupResponse.data.usersCount,
+              size: backupResponse.data.size,
+            }
+          : {
+              reason: backupResponse.data.reason,
+            }),
+      })
 
       if (body.delay) {
         const reportURL = format({
@@ -69,6 +101,11 @@ export function backupUsersMiddleware({
           protocol: 'https',
           pathname: '/reportBackup',
         })
+
+        functions.logger.info('Reporting users backup to the controller', {
+          reportURL,
+        })
+
         await fetch(reportURL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -80,6 +117,8 @@ export function backupUsersMiddleware({
           }),
         })
       }
+
+      functions.logger.info('Responding with the backup status')
 
       operationResponse(response, backupResponse)
     }
@@ -96,18 +135,36 @@ async function backupUsers(
   // Create temporary file path
   const path = tmpPath(options.path)
 
+  functions.logger.info('Exporting users to a temporary file', { path })
+
   // Export users to a temporary file
   await tools.auth.export(path, { project: projectId })
 
   // Calculate users in the backup and
   // upload the users backup to the storage
 
+  functions.logger.info(
+    'Uploading users backup to the storage and counting the users'
+  )
+
   const [usersCount, size] = await Promise.all([
-    calculateUsers(path),
+    calculateUsers(path).then((count) => {
+      functions.logger.info('Got the users count', { count })
+      return count
+    }),
+
     bucket
       .upload(path, { destination: options.path })
-      .then(([file]) => file.metadata.size as string),
+      .then(([file]) => file.metadata.size as string)
+      .then((size) => {
+        functions.logger.info('Uploaded the users backup to the storage', {
+          size,
+        })
+        return size
+      }),
   ])
+
+  functions.logger.info('Removing the temporary file')
 
   // Remove the temporary file
   await unlink(path)

@@ -4,45 +4,68 @@ import { backupFirestore } from './backup'
 import { checkFirestoreBackupStatus } from './status'
 import { Response } from 'express'
 import { getCollections } from './collections'
+import * as functions from 'firebase-functions'
 
-export type FirestoreBackupOptions = {
+export interface FirestoreBackupOptions {
   bucketsAllowlist?: string[]
   projectId: string
 }
 
-export type FirestoreBackupRequestOptions = {
+export type FirestoreBackupRequestBody =
+  | FirestoreBackupRequestBodyComplete
+  | FirestoreBackupRequestBodySelective
+
+export interface FirestoreBackupRequestBodyBase {
   storageId: string
   path: string
-} & (
-  | {
-      mode: 'complete'
-    }
-  | {
-      mode: 'selective'
-      ignoreCollections?: string[]
-      collectionGroups?: string[]
-    }
-)
+}
+
+export interface FirestoreBackupRequestBodyComplete
+  extends FirestoreBackupRequestBodyBase {
+  mode: 'complete'
+}
+
+export interface FirestoreBackupRequestBodySelective
+  extends FirestoreBackupRequestBodyBase {
+  mode: 'selective'
+  ignoreCollections?: string[]
+  collectionGroups?: string[]
+}
 
 export function backupFirestoreMiddleware({
   bucketsAllowlist,
   projectId,
 }: FirestoreBackupOptions) {
   return asyncMiddleware(async (request, response) => {
-    // TODO: Validate options
-    const options = request.body as FirestoreBackupRequestOptions
+    // TODO: Validate body
+    const body = request.body as FirestoreBackupRequestBody
 
-    if (options.mode === 'selective') {
+    if (body.mode === 'selective') {
+      functions.logger.info('Requested Firestore backup', {
+        // NOTE: Do not ...body here to avoid logging sensitive data
+        mode: body.mode,
+        ignoreCollections: body.ignoreCollections,
+        collectionGroups: body.collectionGroups,
+        bucketsAllowlist,
+        projectId,
+      })
+
       // Get all root-level collections
       const allCollections = await getCollections()
-      const { ignoreCollections, collectionGroups } = options
-      const exportedCollections = (ignoreCollections
-        ? allCollections.filter((coll) => !ignoreCollections.includes(coll))
-        : allCollections
+      const { ignoreCollections, collectionGroups } = body
+      const exportedCollections = (
+        ignoreCollections
+          ? allCollections.filter((coll) => !ignoreCollections.includes(coll))
+          : allCollections
       ).concat(collectionGroups || [])
 
+      functions.logger.info('Initiating selective Firestore backup', {
+        exportedCollections,
+        ignoreCollections,
+      })
+
       // Request selective Firestore backup
-      const id = await backupFirestore(projectId, exportedCollections, options)
+      const id = await backupFirestore(projectId, exportedCollections, body)
 
       if (id) {
         return respondWithStatus(response, id, {
@@ -53,8 +76,18 @@ export function backupFirestoreMiddleware({
         return respondWithMissingId(response)
       }
     } else {
+      functions.logger.info('Requested Firestore backup', {
+        // NOTE: Do not ...body here to avoid logging sensitive data
+        mode: body.mode,
+        bucketsAllowlist,
+        projectId,
+      })
+
+      // NOTE: Back-to-back logging here is to reflect the selective backup logging
+      functions.logger.info('Initiating complete Firestore backup')
+
       // Request complete Firestore backup
-      const id = await backupFirestore(projectId, undefined, options)
+      const id = await backupFirestore(projectId, undefined, body)
 
       if (id) {
         return respondWithStatus(response, id)
@@ -65,15 +98,19 @@ export function backupFirestoreMiddleware({
   })
 }
 
-export type FirestoreCheckBackupStatusRequestOptions = {
+export interface FirestoreCheckBackupStatusRequestOptions {
   id: string
 }
 
 export function checkFirestoreBackupStatusMiddleware() {
   return asyncMiddleware(async (request, response) => {
-    // TODO: Validate options
-    const options = request.query as FirestoreCheckBackupStatusRequestOptions
-    return respondWithStatus(response, options.id)
+    // TODO: Validate query
+    const query =
+      request.query as unknown as FirestoreCheckBackupStatusRequestOptions
+
+    functions.logger.info('Requested Firestore backup status')
+
+    return respondWithStatus(response, query.id)
   })
 }
 
@@ -82,14 +119,22 @@ async function respondWithStatus(
   id: string,
   extraData: object = {}
 ) {
+  functions.logger.info('Checking the backup status', { id })
+
   const status = await checkFirestoreBackupStatus(id)
+  const state = status.done ? 'completed' : 'pending'
+
+  functions.logger.info('Responding with the backup status', { id, state })
+
   operationResponse(response, {
-    state: status.done ? 'completed' : 'pending',
+    state,
     data: Object.assign({ id, status }, extraData),
   })
 }
 
 function respondWithMissingId(response: Response) {
+  functions.logger.info('Responding with missing id error')
+
   operationResponse(response, {
     state: 'failed',
     data: {
@@ -101,7 +146,14 @@ function respondWithMissingId(response: Response) {
 
 export function getCollectionsMiddleware() {
   return asyncMiddleware(async (_request, response) => {
+    functions.logger.info('Requested Firestore collections')
+
     const collections = await getCollections()
+
+    functions.logger.info('Responding with Firestore collections', {
+      collections,
+    })
+
     response.send(collections)
   })
 }

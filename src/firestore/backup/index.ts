@@ -1,10 +1,10 @@
-import { FirestoreBackupRequestOptions } from '..'
+import { FirestoreBackupRequestBody } from '..'
 import firestore from '@google-cloud/firestore'
 
 export async function backupFirestore(
   projectId: string,
   collectionIds: string[] | undefined,
-  options: FirestoreBackupRequestOptions
+  options: FirestoreBackupRequestBody
 ) {
   const client = new firestore.v1.FirestoreAdminClient()
 
