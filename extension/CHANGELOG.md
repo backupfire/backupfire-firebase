@@ -7,6 +7,16 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## v1.5.0 - 2023-02-28
+
+### Changed
+
+- The version now match the agent npm package version.
+
+### Added
+
+- Added logging to the agent endpoints to help with debugging and troubleshooting.
+
 ## v1.1.0 - 2022-08-03
 
 ### Changed
