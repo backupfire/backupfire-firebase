@@ -9,7 +9,7 @@ test-watch:
 
 test-lib:
 	node test/lib/commonjs.js
-	npx ts-node test/lib/ts.ts
+	npx tsx test/lib/ts.ts
 
 # Test projects
 
