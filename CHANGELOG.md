@@ -7,6 +7,18 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## 1.6.0 - 2023-03-10
+
+### Changed
+
+- Upgraded firebase-tools.
+
+- Set the function `invoker` to `public` to enforce Firebase adding the permission to `allUsers`, to avoid [random permission bug](https://github.com/firebase/firebase-tools/issues/3965#issuecomment-1006005316).
+
+### Fixed
+
+- Fix `memory` not setting to default memory runtime option (`1Gb`).
+
 ## 1.5.0 - 2023-02-28
 
 ### Added
