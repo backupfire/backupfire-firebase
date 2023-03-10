@@ -1,6 +1,6 @@
 {
   "name": "@backupfire/firebase-extension",
-  "version": "1.6.1",
+  "version": "1.6.2",
   "description": "Backup Fire Firebase extension",
   "homepage": "https://backupfire.dev",
   "repository": "https://github.com/backupfire/backupfire-firebase",

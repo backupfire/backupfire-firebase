@@ -1,5 +1,5 @@
 name: backupfire-agent
-version: 1.6.1
+version: 1.6.2
 specVersion: v1beta
 
 displayName: Backup Fire Agent
@@ -108,7 +108,7 @@ resources:
     type: firebaseextensions.v1beta.function
     properties:
       location: ${LOCATION}
-      runtime: nodejs18
+      runtime: nodejs16
       timeout: 540s
       availableMemoryMb: 1024
       httpsTrigger: {}

@@ -7,6 +7,12 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## 1.6.2 - 2023-03-10
+
+### Fixed
+
+- Rollback the runtime version back to v16 as v18 is not yet supported by the dependencies.
+
 ## 1.6.1 - 2023-03-10
 
 ### Fixed
