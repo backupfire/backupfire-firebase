@@ -7,6 +7,12 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## 1.7.0 - 2023-03-10
+
+### Fixed
+
+- Fixed compatibility with the latest firebase-functions.
+
 ## 1.6.2 - 2023-03-10
 
 ### Fixed
