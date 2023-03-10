@@ -7,6 +7,18 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## v1.6.0 - 2023-03-10
+
+### Changed
+
+- Upgraded the Node.js runtime from v16 to v18.
+
+- Bumped the default RAM to 1Gb RAM and set the timeout to 9 minutes. It solves the problem with the huge users' backups that either run out of memory or timeout.
+
+- Set function invoker to public, to avoid [random permission bug](https://github.com/firebase/firebase-tools/issues/3965#issuecomment-1006005316).
+
+- Upgraded firebase-functions and firebase-admin.
+
 ## v1.5.0 - 2023-02-28
 
 ### Changed
