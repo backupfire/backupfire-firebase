@@ -234,6 +234,9 @@ function httpsHandler({
       .runWith({
         ...getRuntimeOptions(agentOptions),
         secrets: Object.values(BackupFireConfig),
+        // Sometimes Firebase Functions doesn't set the invoker correctly:
+        // See: https://github.com/firebase/firebase-tools/issues/3965#issuecomment-1006005316
+        invoker: 'public',
       })
       .region(agentOptions?.region || defaultRegion)
       .https.onRequest(handler)
@@ -349,11 +352,12 @@ function getRuntimeOptions(
   agentOptions: AgentOptions | undefined
 ): functions.RuntimeOptions {
   const options: functions.RuntimeOptions = {
-    // Always assign timeout to runtime options. Unless the user defines
-    // a custom timeout, we want to use the default timeout of 9 minutes,
-    // to make sure the user backups are completed regardless of how many
-    // there are.
+    // Always assign timeout and memory to runtime options. Unless the user
+    // defines custom values, we want to use the default timeout of 9 minutes
+    // and 1Gb memory to make sure the user backups are completed regardless
+    // of how many there are.
     timeoutSeconds: agentOptions?.timeout || defaultTimeout,
+    memory: agentOptions?.memory || defaultMemory,
   }
 
   if (agentOptions?.memory) options.memory = agentOptions.memory
