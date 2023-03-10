@@ -1,5 +1,5 @@
 name: backupfire-agent
-version: 1.6.0
+version: 1.6.1
 specVersion: v1beta
 
 displayName: Backup Fire Agent
@@ -111,5 +111,4 @@ resources:
       runtime: nodejs18
       timeout: 540s
       availableMemoryMb: 1024
-      httpsTrigger:
-        invoker: public
+      httpsTrigger: {}

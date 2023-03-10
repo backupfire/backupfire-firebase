@@ -7,6 +7,12 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## 1.6.1 - 2023-03-10
+
+### Fixed
+
+- Removed unsupported `invoker`, which unfortunately voids the related update from `v1.6.0`.
+
 ## v1.6.0 - 2023-03-10
 
 ### Changed
