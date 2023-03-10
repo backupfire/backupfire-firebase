@@ -7,6 +7,16 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## 1.7.0 - 2023-03-10
+
+### Changed
+
+- Upgraded firebase-functions to the latest version (from 3 to 4).
+
+### Fixed
+
+- Fixed the extension compatibility with the latest firebase-functions.
+
 ## 1.6.0 - 2023-03-10
 
 ### Changed

@@ -228,7 +228,7 @@ function httpsHandler({
   runtimeEnv,
 }: HTTPSHandlerProps) {
   if (runtimeEnv?.extensionId) {
-    return functions.handler.https.onRequest(handler)
+    return functions.https.onRequest(handler)
   } else {
     return functions
       .runWith({
