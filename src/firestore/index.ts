@@ -69,9 +69,11 @@ export function backupFirestoreMiddleware({
 
       if (id) {
         return respondWithStatus(response, id, {
-          exportedCollections,
+          exportedCollections: exportedCollections.filter(
+            (coll) => !collectionGroups?.includes(coll)
+          ),
           ignoredCollections: ignoreCollections || [],
-          collectionGroups,
+          exportedCollectionGroups: collectionGroups || [],
         })
       } else {
         return respondWithMissingId(response)
