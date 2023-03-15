@@ -7,6 +7,12 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## 1.8.0 - 2023-03-15
+
+### Added
+
+- Respond with collection groups back to the controller to display collection groups on the backup page.
+
 ## 1.7.0 - 2023-03-10
 
 ### Fixed
