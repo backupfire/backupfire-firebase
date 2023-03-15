@@ -1,6 +1,6 @@
 {
   "name": "@backupfire/firebase",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "Backup Fire Firebase agent",
   "keywords": [
     "backup Firebase database",
