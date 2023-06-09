@@ -337,7 +337,7 @@ function getEnvConfig(): BackupFireEnvConfig | undefined {
   // Otherwise, return the env config value
   else {
     functions.logger.debug('Using Firebase env config values')
-    envConfig
+    return envConfig
   }
 }
 

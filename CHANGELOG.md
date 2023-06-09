@@ -9,6 +9,12 @@ This change log follows the format documented in [Keep a CHANGELOG].
 
 ## 1.9.1 - 2023-06-09
 
+### Fixed
+
+- Fixed the agent incorrectly retrieving the env config from `functions.config()`.
+
+## 1.9.0 - 2023-06-09
+
 ### Changed
 
 - Replaced `console.log` calls with `functions.logger` and added more debug logs around retrieving the env config.
