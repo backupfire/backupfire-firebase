@@ -37,6 +37,7 @@ import {
   exceptionHandlerMiddleware,
   initExceptionsTracker,
 } from './_lib/exceptions'
+import { maskString } from './_lib/logging'
 
 export enum BackupFireConfig {
   Token = 'BACKUPFIRE_TOKEN',
@@ -70,7 +71,7 @@ export default function backupFire(agentOptions?: AgentOptions) {
 
     // If options aren't set, use  dummy handler instead
     if (!envConfig) {
-      console.warn(
+      functions.logger.warn(
         `Warning: the Backup Fire configuration is missing, either set BACKUPFIRE_TOKEN and BACKUPFIRE_PASSWORD or set backupfire.token and backupfire.password as env config values. Running a dummy HTTP handler instead of the Backup Fire agent...`
       )
       return dummyHandler({ region: agentOptions?.region })
@@ -94,7 +95,7 @@ export default function backupFire(agentOptions?: AgentOptions) {
     // If the function name isn't backupfire, use dummy handler
     if (runtimeEnv.functionName !== 'backupfire') {
       if (options.debug)
-        console.log(
+        functions.logger.debug(
           `The function name isn't "backupfire" (${runtimeEnv.functionName}). Running a dummy HTTP handler instead of the Backup Fire agent...`
         )
       return dummyHandler(options)
@@ -102,11 +103,11 @@ export default function backupFire(agentOptions?: AgentOptions) {
 
     // If some of the variables are missing, use dummy handler
     if (!isCompleteRuntimeEnv(runtimeEnv)) {
-      console.warn(
+      functions.logger.warn(
         'Warning: runtime environment is incomplete:',
         prettyJSON(runtimeEnv)
       )
-      console.warn(
+      functions.logger.warn(
         'Running a dummy HTTP handler instead of the Backup Fire agent...'
       )
       return dummyHandler(options)
@@ -120,11 +121,11 @@ export default function backupFire(agentOptions?: AgentOptions) {
     })
 
     if (options.debug) {
-      console.log(
+      functions.logger.debug(
         'Initializing Backup Fire agent with options:',
         prettyJSON(options)
       )
-      console.log('Runtime environment:', prettyJSON(runtimeEnv))
+      functions.logger.debug('Runtime environment:', prettyJSON(runtimeEnv))
     }
 
     // Send the initialization ping to the controller
@@ -301,6 +302,8 @@ function getRuntimeEnv(
 }
 
 function getEnvConfig(): BackupFireEnvConfig | undefined {
+  functions.logger.debug('Retrieving the env config')
+
   const token = process.env[BackupFireConfig.Token]
   const password = process.env[BackupFireConfig.Password]
   const domain = process.env[BackupFireConfig.Domain]
@@ -310,10 +313,32 @@ function getEnvConfig(): BackupFireEnvConfig | undefined {
     | BackupFireEnvConfig
     | undefined
 
+  functions.logger.debug('The env variables found', {
+    token: maskString(token, { critical: false }),
+    password: maskString(password),
+    domain,
+    allowlist,
+  })
+
+  if (envConfig) {
+    functions.logger.debug('The Firebase env config found', {
+      password: maskString(envConfig.password),
+      token: maskString(envConfig.token, { critical: false }),
+    })
+  } else {
+    functions.logger.debug('The Firebase env config is not found')
+  }
+
   // First, check if the env contains the token & password
-  if (token && password) return { token, password, domain, allowlist }
+  if (token && password) {
+    functions.logger.debug('Using env variable values')
+    return { token, password, domain, allowlist }
+  }
   // Otherwise, return the env config value
-  else envConfig
+  else {
+    functions.logger.debug('Using Firebase env config values')
+    envConfig
+  }
 }
 
 function isCompleteRuntimeEnv(

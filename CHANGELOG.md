@@ -7,6 +7,12 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## 1.9.1 - 2023-06-09
+
+### Changed
+
+- Replaced `console.log` calls with `functions.logger` and added more debug logs around retrieving the env config.
+
 ## 1.8.1 - 2023-03-15
 
 ### Fixed
