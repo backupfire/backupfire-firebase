@@ -7,6 +7,12 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: https://semver.org
 [keep a changelog]: https://keepachangelog.com
 
+## 1.8.1 - 2023-03-15
+
+### Fixed
+
+- Excluded collection groups from exported collections when responding to the controller.
+
 ## 1.8.0 - 2023-03-15
 
 ### Added
